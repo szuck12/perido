@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-08-22
 
 ### Changed
 - Project renamed from cli-pomodoro to **Perido**: the package, the
@@ -13,6 +13,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and equivalents), the `perido.db` database file, and the `PERIDO_HOME`
   environment override. Existing data migrates by copying `pomodoro.db`
   and `config.json` into the new directory.
+- Changelog release process rewritten as a numbered step-by-step guide in
+  `docs/update_changelog.md`.
+- Packaging derives its version dynamically from `perido.__version__`,
+  removing the duplicate static version pin in `pyproject.toml`.
 
 ## [0.1.0] - 2026-08-20
 

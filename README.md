@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **0.1.0** — [Changelog](CHANGELOG.md)
+Current version: **0.2.0** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -219,7 +219,8 @@ perido/
     ├── test_database.py
     ├── test_insights.py
     ├── test_stats.py
-    └── test_timer.py
+    ├── test_timer.py
+    └── test_version.py
 ```
 
 ## Tests

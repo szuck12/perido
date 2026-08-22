@@ -11,6 +11,12 @@
       crash-safe state (#timer, #infra)
 - [x] 2026-08-20 — Fake-clock test harness with isolated data directory
       (#test, #infra)
+- [x] 2026-08-22 — Renamed the project from cli-pomodoro to Perido:
+      package, command, data directory, database file, and env override
+      (#infra, #docs)
+- [x] 2026-08-22 — Changelog process rewritten as numbered release steps;
+      package version now sourced dynamically from `perido.__version__`
+      (#docs, #infra)
 
 ## High Priority
 
