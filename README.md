@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **0.3.0** — [Changelog](CHANGELOG.md)
+Current version: **1.4.0** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -53,7 +53,7 @@ pip install -e .
 Verify:
 
 ```bash
-perido --version               # perido 0.3.0
+perido --version               # perido 1.4.0
 ```
 
 ## Command-Line Usage
@@ -72,9 +72,10 @@ perido --version               # perido 0.3.0
 | `perido skip` | Abandon the session without recording any focus time |
 | `perido status` | Show the current session, or why there isn't one |
 
-`start` and `break` accept a preset flag (`--short`, `--medium`, `--long`,
-`--extralong`) or an exact duration (`--duration 40`). With no flag they use
-the configured medium duration — except `break`, which defaults to short.
+`start` and `break` accept a preset flag (`--extrashort`, `--short`,
+`--medium`, `--long`, `--extralong`) or an exact duration (`--duration 40`).
+With no flag they use the configured medium duration — except `break`,
+which defaults to short.
 
 Add `-w` / `--watch` to `start`, `break`, or `status` to stay in the
 terminal and watch the timer count down live. Ctrl-C stops watching only;
@@ -93,24 +94,26 @@ final step completes the cycle.
 
 Built-in cycles — each name describes its plan's shape:
 
-| Cycle | Plan (focus · break minutes) | Character |
-|-------|------------------------------|-----------|
-| `classic` | 25·5·25·5·25·5·25·15 | The standard Pomodoro day |
-| `short` | 15·5·15·5·15 | Three gentle sessions |
-| `sprint` | 10·2·10·2·10 | Tight bursts, minimal breaks |
-| `deep` | 50·10·50·10·50·30 | Long stretches of concentration |
-| `extended` | 90·20·90·30 | Two marathon blocks |
-| `ladder` | 10·2·20·3·30·5 | Focus climbs each round |
-| `descent` | 40·5·25·5·15 | Winds down to a close |
-| `twist` | 45·10·15·5·45·10 | Alternates long and short |
-| `clockwork` | 20·5·20·5·20·5·20 | Metronomic uniform blocks |
-| `passion` | 60 | One immersive focus block |
-| `marathon` | 30·5 repeated, closing with 30·20 | Six sessions, ~3 hours |
-| `tabata` | 5·1·5·1·5·1·5·1 | High-intensity micro-bursts |
-| `warmup` | 10·5·15·5 | A gentle entry into work |
-| `flow` | 60·10·60 | Two long, connected blocks |
-| `zen` | 45·5·45·5·45 | Deep work, barely interrupted |
-| `grind` | 25·3·25·3·25 | Steady slog, short breathers |
+| Cycle | Plan (minutes) | Work | Break | Total |
+|-------|----------------|------|-------|-------|
+| `classic` | 25, 5, 25, 5, 25, 5, 25, 15 | 1h 40m | 30m | 2h 10m |
+| `clockwork` | 20, 5, 20, 5, 20, 5, 20, 5, 20 | 1h 40m | 20m | 2h |
+| `deep` | 50, 10, 50, 10, 50, 30 | 2h 30m | 50m | 3h 20m |
+| `descent` | 40, 5, 25, 5, 15 | 1h 20m | 10m | 1h 30m |
+| `extended` | 90, 20, 90, 30 | 3h | 50m | 3h 50m |
+| `flow` | 60, 10, 60 | 2h | 10m | 2h 10m |
+| `grind` | 25, 3, 25, 3, 25, 3, 25, 3, 25 | 2h 05m | 12m | 2h 17m |
+| `ladder` | 10, 2, 20, 3, 30, 5 | 1h | 10m | 1h 10m |
+| `marathon` | 30, 5, 30, 5, 30, 5, 30, 5, 30, 5, 30, 20 | 3h | 45m | 3h 45m |
+| `monolith` | 180 | 3h | 0m | 3h |
+| `passion` | 60 | 1h | 0m | 1h |
+| `short` | 15, 5, 15, 5, 15 | 45m | 10m | 55m |
+| `sprint` | 10, 2, 10, 2, 10 | 30m | 4m | 34m |
+| `summit` | 100, 15, 100, 20 | 3h 20m | 35m | 3h 55m |
+| `twist` | 45, 10, 15, 5, 45, 10 | 1h 45m | 25m | 2h 10m |
+| `ultra` | 150, 20, 150, 30 | 5h | 50m | 5h 50m |
+| `warmup` | 10, 5, 15, 5 | 25m | 10m | 35m |
+| `zen` | 45, 5, 45, 5, 45 | 2h 15m | 10m | 2h 25m |
 
 Stopping or skipping mid-cycle abandons the rest of that cycle. Cycles
 never backfill missed time: if you walk away mid-cycle, one phase completes
@@ -140,7 +143,7 @@ history exists to make them meaningful.
 
 ### Durations
 
-Five presets are available for both focus and breaks. Adjust any of them:
+Six presets are available for both focus and breaks. Adjust any of them:
 
 ```bash
 perido config set focus.medium 30     # default focus becomes 30 min
@@ -151,6 +154,7 @@ Defaults:
 
 | Preset | Focus | Break |
 |--------|-------|-------|
+| `extrashort` | 10 min | 3 min |
 | `short` | 15 min | 5 min |
 | `medium` | 25 min | 10 min |
 | `long` | 50 min | 15 min |
@@ -160,26 +164,7 @@ Defaults:
 
 Cycles are comma-separated lists of step lengths in minutes. They must
 alternate focus/break and start with focus; the last step's break counts as
-the long break. Defaults:
-
-| Cycle | Plan | Total |
-|-------|------|-------|
-| `classic` | 25, 5, 25, 5, 25, 5, 25, 15 | 2h 10m |
-| `short` | 15, 5, 15, 5, 15 | 55m |
-| `sprint` | 10, 2, 10, 2, 10 | 34m |
-| `deep` | 50, 10, 50, 10, 50, 30 | 3h 20m |
-| `extended` | 90, 20, 90, 30 | 3h 50m |
-| `ladder` | 10, 2, 20, 3, 30, 5 | 1h 10m |
-| `descent` | 40, 5, 25, 5, 15 | 1h 30m |
-| `twist` | 45, 10, 15, 5, 45, 10 | 2h 10m |
-| `clockwork` | 20, 5, 20, 5, 20, 5, 20 | 1h 35m |
-| `passion` | 60 | 1h |
-| `marathon` | 30, 5, 30, 5, 30, 5, 30, 5, 30, 5, 30, 20 | 3h 45m |
-| `tabata` | 5, 1, 5, 1, 5, 1, 5, 1 | 24m |
-| `warmup` | 10, 5, 15, 5 | 35m |
-| `flow` | 60, 10, 60 | 2h 10m |
-| `zen` | 45, 5, 45, 5, 45 | 2h 25m |
-| `grind` | 25, 3, 25, 3, 25 | 1h 21m |
+the long break. The default plans are listed in the Cycles table above.
 
 Adjust any built-in cycle by rewriting its plan:
 
@@ -259,13 +244,29 @@ perido/
 
 ## Tests
 
+Run the full suite:
+
 ```bash
 pip install -r requirements.txt
 python3 -m pytest tests/
 ```
 
-The suite uses a fake clock and an isolated data directory, so it never
-touches your real data and always finishes in under a second.
+Run a single test file:
+
+```bash
+python3 -m pytest tests/test_timer.py
+```
+
+Run one test by node id or keyword:
+
+```bash
+python3 -m pytest tests/test_timer.py::test_shorten_pulls_end_time_earlier
+python3 -m pytest tests/test_timer.py -k shorten
+```
+
+Add `-v` for verbose output. The suite uses a fake clock and an isolated
+data directory, so it never touches your real data and always finishes in
+under a second.
 
 ## License
 
