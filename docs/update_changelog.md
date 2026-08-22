@@ -1,117 +1,109 @@
 # Updating the Changelog
 
-This document describes when and how to update `CHANGELOG.md`, and how
-version numbers are chosen.
+This document describes the process to follow whenever a change is made to
+the project. It governs version numbering, changelog entries, README and
+TODO updates, and release commits.
 
-## Principles
+## Step 1 — Determine the New Version
 
-Every change falls into one of two buckets: it either gets a changelog
-entry, or it doesn't.
+Follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html):
 
-✅ **Include:**
+| Bump | Rule | Example |
+|------|------|---------|
+| MAJOR | Backward-incompatible changes (removing a command, changing output scripts depend on, incompatible config or database migration) | 1.0.0 → 2.0.0 |
+| MINOR | New backward-compatible functionality (new command, flag, cycle preset, insight rule) | 1.0.0 → 1.1.0 |
+| PATCH | Bug fixes and small polish that add no functionality | 1.0.0 → 1.0.1 |
 
-- User-facing changes — new commands, flags, output, error messages, or
-  changed behaviour of anything documented in the README.
-- Test-infrastructure changes contributors would notice, e.g. a new
-  shared fixture or a rewritten test runner.
-- Documentation changes affecting how users or contributors interact
-  with the project (README usage sections, this process,
-  `maintain_todo.md`).
-
-❌ **Exclude:**
-
-- Internal refactoring — renamed variables, moved files, reformatted
-  code with no behaviour change.
-- Comment-only or whitespace-only changes, including docstring rewording
-  that doesn't change meaning.
-- Routine test additions or tweaks (as opposed to infrastructure
-  changes).
-- Dependency bumps that don't change observable behaviour.
-
-One release per meaningful batch of work — not per commit.
-
-## Version Numbering (Semantic Versioning)
-
-Given a version `MAJOR.MINOR.PATCH`:
-
-| Change type | Bump | Examples |
-|-------------|------|----------|
-| Bug fix, typo fix, small polish | PATCH | 0.1.0 → 0.1.1 |
-| New feature, new command flag, new insight rule | MINOR | 0.1.1 → 0.2.0 |
-| Breaking change: removed command, changed output format scripts depend on, incompatible config or database migration | MAJOR | 0.2.x → 1.0.0 |
-
-When one component is bumped, every component to its right resets to
-zero: `0.2.3 → 0.3.0`, `0.2.3 → 1.0.0`.
+When a component is bumped, all components to its right reset to zero
+(e.g. 1.2.3 → 2.0.0, 1.2.3 → 1.3.0).
 
 While the project is pre-1.0, MINOR bumps may contain breaking changes —
 but note them explicitly under a `### Changed` heading.
 
-## The `[Unreleased]` Section
+## Step 2 — Update CHANGELOG.md
 
-Entries accumulate under `## [Unreleased]` at the top of `CHANGELOG.md`
-as work merges, organised into the section headings described below. At
-release time the section is promoted: its heading becomes
-`[X.Y.Z] - YYYY-MM-DD`, and a fresh empty `## [Unreleased]` takes its
-place above the new release. A release must never ship while entries are
-still marked Unreleased.
-
-## Entry Format
-
-The format follows [Keep a Changelog](https://keepachangelog.com). Each
-release looks like:
+Add a new section at the top of `CHANGELOG.md`:
 
 ```markdown
-## [0.2.0] - 2026-09-14
+## [X.Y.Z] - YYYY-MM-DD
 
 ### Added
-- `perido extend` now accepts fractional minutes.
-
+### Changed
+### Deprecated
+### Removed
 ### Fixed
-- Week chart no longer mislabels days during DST shifts.
+### Security
 ```
 
-Rules:
+Include only the section headers that have entries. Omit empty sections.
+The date is the release date (`YYYY-MM-DD`), not the commit date.
 
-- Sections used, in this order: `Added`, `Changed`, `Deprecated`,
-  `Removed`, `Fixed`, `Security`. Omit empty ones.
-- Each bullet is one concise line from the **user's perspective** — what
-  they can now do, or what now behaves correctly.
-- The date is the release date (`YYYY-MM-DD`), not the commit date.
-- Mention new/changed test counts only when a feature ships with them.
+### What to include
 
-Group related changes under a single version. Most releases should
-contain several entries rather than being cut for each individual
-change.
+- ✅ **User-facing changes** — new commands, flags, cycle presets, output,
+    error messages, or changed behaviour of anything documented in the
+    README.
+- ✅ **Test infrastructure changes** — new fixtures or suites that affect
+    how developers validate the project.
+- ✅ **Documentation changes** that affect how users or contributors
+    interact with the project (README usage sections, this process).
+- ❌ **Internal refactoring** — renamed variables, reformatted code, moved
+    files without changing behaviour.
+- ❌ **Comment or whitespace-only changes** — docstring rewording that
+    doesn't change meaning.
+- ❌ **Routine test additions** — new test cases for existing behaviour,
+    as opposed to infrastructure.
+- ❌ **Dependency bumps** that don't change observable behaviour.
 
-## Release Checklist
+Each entry should be a single concise line describing the change from the
+user's perspective — what they can now do, or what now behaves correctly.
+Mention new/changed test counts only when a feature ships with them.
 
-1. Ensure the full test suite passes: `python3 -m pytest tests/`.
-2. Bump `__version__` in `perido/__init__.py`. Reset any components to
-   the right of the bumped one.
-3. Promote the `[Unreleased]` section in `CHANGELOG.md`: rename its
-   heading to `[X.Y.Z] - <release date>` and start a fresh empty
-   `## [Unreleased]` above it.
-4. Update `README.md`:
-   - Version badge on line 3 (`Current version: **X.Y.Z**`) to match.
-   - Project Structure tree if files were added, removed, or renamed.
-   - Usage sections if CLI syntax, options, or examples changed.
-5. Move shipped items from `TODO.md`'s **Done** section if not already
-   there (see [maintain_todo.md](maintain_todo.md)).
-6. Commit the release as a single commit:
+### Grouping
 
-   ```
-   Release X.Y.Z — <brief summary>
-   ```
+Group related changes under a single version. Most releases should contain
+multiple changes rather than one per version — one release per meaningful
+batch of work, not per commit.
 
-   For example:
+## Step 3 — Update README.md
 
-   ```
-   Release 0.2.0 — Add fractional-minute extends
-   ```
+1. **Version badge** — update the badge line under the title:
+   `Current version: **X.Y.Z**`
 
-## Relationship to Other Documentation
+   The README only ever shows the current (latest) release version. Full
+   version history lives exclusively in CHANGELOG.md — do not add a
+   version list or past releases to the README.
 
-| File | Role |
-|------|------|
-| `TODO.md` | Forward-looking; items move out of it into the changelog when they ship. |
-| `README.md` | Must always describe the released behaviour; its version badge mirrors the latest entry here. |
+2. **Project structure** — if files were added or removed, update the
+   directory tree in the Project Structure section.
+
+3. **Feature documentation** — if commands, flags, cycle presets, or usage
+   examples changed, update the relevant sections so the README always
+   describes released behaviour.
+
+## Step 4 — Move Shipped Items in TODO.md
+
+Move items that shipped out of TODO.md into its **Done** section with the
+release date (see [maintain_todo.md](maintain_todo.md)). Reword any Ideas
+or priority entries that described the old state of the project (e.g. "the
+five built-in presets") so they stay accurate.
+
+## Step 5 — Commit
+
+First ensure the full test suite passes:
+
+```bash
+python3 -m pytest tests/
+```
+
+Then create a single commit with the message format:
+
+```
+Release X.Y.Z — <brief summary>
+```
+
+Example:
+
+```
+Release 1.1.0 — Add Bollinger Bands indicator
+```
