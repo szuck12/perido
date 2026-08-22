@@ -64,7 +64,7 @@ common ones:
 
 | Tag | When to Use |
 |-----|-------------|
-| `#timer` | Session lifecycle: start/stop/pause/resume/extend/skip |
+| `#timer` | Session lifecycle: start/stop/pause/resume/extend/shorten/skip |
 | `#cycles` | Multi-session cycle logic and plans |
 | `#stats` | History, statistics, week chart |
 | `#insights` | Rule-based insight messages |

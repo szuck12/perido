@@ -102,8 +102,8 @@ same rules.
 ### 2b. Lazy Finalisation
 
 - [ ] Every public mutation (`start`, `stop`, `pause`, `resume`,
-      `extend`, `skip`, `break`, `cycle`) finalises expired sessions
-      first — no zombie active sessions can survive a command.
+      `extend`, `shorten`, `skip`, `break`, `cycle`) finalises expired
+      sessions first — no zombie active sessions can survive a command.
 - [ ] Paused sessions are never auto-completed by finalisation.
 - [ ] Finalisation returns an ordered event list; the CLI renders
       events before rendering current state.
@@ -144,7 +144,7 @@ Against the suite in `tests/` (fake clock + isolated `PERIDO_HOME`).
 | Config round-trip (load/save/reset) | `test_config.py` | |
 | Invalid config keys/values rejected | `test_config.py` | |
 | Schema creation and row helpers | `test_database.py` | |
-| Start/stop/pause/resume/extend/skip lifecycle | `test_timer.py` | |
+| Start/stop/pause/resume/extend/shorten/skip lifecycle | `test_timer.py` | |
 | Expired-session finalisation (incl. paused) | `test_timer.py` | |
 | Cycle advance, completion, abandonment | `test_cycles.py` | |
 | Cycle stall-and-resync across boundaries | `test_cycles.py` | |
@@ -182,8 +182,8 @@ Systematic sweep of every failure mode across the codebase.
 
 - [ ] Starting a session while one is active raises `PeridoError`
       with a helpful message (exit 1, stderr).
-- [ ] Stopping/pausing/extending/skipping with no active session
-      errors cleanly.
+- [ ] Stopping/pausing/extending/shortening/skipping with no active
+      session errors cleanly.
 - [ ] Resuming a non-paused session errors cleanly.
 - [ ] Extending by zero or negative minutes is rejected by argparse.
 - [ ] Corrupt `config.json` falls back to defaults instead of

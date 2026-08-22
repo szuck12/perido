@@ -1,6 +1,6 @@
 # timer.py
-# Session lifecycle state machine: start, pause, resume, extend, stop,
-# skip, and lazy finalization of expired sessions.
+# Session lifecycle state machine: start, pause, resume, extend,
+# shorten, stop, skip, and lazy finalization of expired sessions.
 
 from __future__ import annotations
 

@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-22
+
+### Added
+- `perido shorten MINUTES` — pulls the active session's end time earlier;
+  refuses with a clear error when less time remains than requested.
+  Works on standalone sessions, breaks, and cycle phases.
+- History rows mark shortened sessions with `-Nm trimmed`, mirroring the
+  existing extension tag.
+- Eleven new built-in cycles whose names describe their shape (16 total):
+  ladder, descent, twist, clockwork, passion, marathon, tabata, warmup,
+  flow, zen, and grind.
+- 165 tests (was 136), covering shorten semantics, trimmed history tags,
+  and every default cycle plan.
+
+### Fixed
+- Extension-habit statistics and insights no longer count shortened
+  sessions as extensions.
+
 ## [0.2.0] - 2026-08-22
 
 ### Changed

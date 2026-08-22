@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **0.2.0** — [Changelog](CHANGELOG.md)
+Current version: **0.3.0** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -53,7 +53,7 @@ pip install -e .
 Verify:
 
 ```bash
-perido --version               # perido 0.1.0
+perido --version               # perido 0.3.0
 ```
 
 ## Command-Line Usage
@@ -68,6 +68,7 @@ perido --version               # perido 0.1.0
 | `perido pause` | Pause the active session (pausing freezes the end time) |
 | `perido resume` | Resume a paused session |
 | `perido extend MINUTES` | Push the end time later by MINUTES |
+| `perido shorten MINUTES` | Pull the end time earlier by MINUTES (error if less remains) |
 | `perido skip` | Abandon the session without recording any focus time |
 | `perido status` | Show the current session, or why there isn't one |
 
@@ -87,8 +88,29 @@ final step completes the cycle.
 
 | Command | Description |
 |---------|-------------|
-| `perido cycle NAME` | Start cycle NAME (e.g. `classic`) |
+| `perido cycle NAME` | Start cycle NAME (see table below) |
 | `perido config` | List available cycles and their plans |
+
+Built-in cycles — each name describes its plan's shape:
+
+| Cycle | Plan (focus · break minutes) | Character |
+|-------|------------------------------|-----------|
+| `classic` | 25·5·25·5·25·5·25·15 | The standard Pomodoro day |
+| `short` | 15·5·15·5·15 | Three gentle sessions |
+| `sprint` | 10·2·10·2·10 | Tight bursts, minimal breaks |
+| `deep` | 50·10·50·10·50·30 | Long stretches of concentration |
+| `extended` | 90·20·90·30 | Two marathon blocks |
+| `ladder` | 10·2·20·3·30·5 | Focus climbs each round |
+| `descent` | 40·5·25·5·15 | Winds down to a close |
+| `twist` | 45·10·15·5·45·10 | Alternates long and short |
+| `clockwork` | 20·5·20·5·20·5·20 | Metronomic uniform blocks |
+| `passion` | 60 | One immersive focus block |
+| `marathon` | 30·5 repeated, closing with 30·20 | Six sessions, ~3 hours |
+| `tabata` | 5·1·5·1·5·1·5·1 | High-intensity micro-bursts |
+| `warmup` | 10·5·15·5 | A gentle entry into work |
+| `flow` | 60·10·60 | Two long, connected blocks |
+| `zen` | 45·5·45·5·45 | Deep work, barely interrupted |
+| `grind` | 25·3·25·3·25 | Steady slog, short breathers |
 
 Stopping or skipping mid-cycle abandons the rest of that cycle. Cycles
 never backfill missed time: if you walk away mid-cycle, one phase completes
@@ -147,6 +169,17 @@ the long break. Defaults:
 | `sprint` | 10, 2, 10, 2, 10 | 34m |
 | `deep` | 50, 10, 50, 10, 50, 30 | 3h 20m |
 | `extended` | 90, 20, 90, 30 | 3h 50m |
+| `ladder` | 10, 2, 20, 3, 30, 5 | 1h 10m |
+| `descent` | 40, 5, 25, 5, 15 | 1h 30m |
+| `twist` | 45, 10, 15, 5, 45, 10 | 2h 10m |
+| `clockwork` | 20, 5, 20, 5, 20, 5, 20 | 1h 35m |
+| `passion` | 60 | 1h |
+| `marathon` | 30, 5, 30, 5, 30, 5, 30, 5, 30, 5, 30, 20 | 3h 45m |
+| `tabata` | 5, 1, 5, 1, 5, 1, 5, 1 | 24m |
+| `warmup` | 10, 5, 15, 5 | 35m |
+| `flow` | 60, 10, 60 | 2h 10m |
+| `zen` | 45, 5, 45, 5, 45 | 2h 25m |
+| `grind` | 25, 3, 25, 3, 25 | 1h 21m |
 
 Adjust any built-in cycle by rewriting its plan:
 
@@ -181,7 +214,8 @@ PERIDO_HOME=/tmp/demo perido start
 | Message | Meaning and fix |
 |---------|-----------------|
 | `A Pomodoro session is already active.` | Only one session can run at a time. Check `perido status`, then `stop`, `skip`, or wait it out. |
-| `No active Pomodoro session.` | `stop` / `pause` / `extend` / `skip` need a running session. |
+| `No active Pomodoro session.` | `stop` / `pause` / `extend` / `shorten` / `skip` need a running session. |
+| `Cannot shorten by N minutes — ...` | The session has less time left than requested. Use a smaller number, or `extend` first if you meant to reshape it. |
 | `No paused Pomodoro session to resume.` | The session isn't paused. |
 | `Unknown cycle 'name'.` | Run `perido config` to list valid cycle names. |
 | `Unknown key. Valid keys: ...` | Config keys are dotted presets like `focus.long` or `cycles.classic`. |

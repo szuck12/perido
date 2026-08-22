@@ -6,8 +6,8 @@ Every `.py` file starts with a brief comment describing the module's purpose.
 
 ```python
 # timer.py
-# Session lifecycle: start, pause/resume, extend, stop/skip, and the
-# lazy finalisation that turns expired rows into results.
+# Session lifecycle: start, pause/resume, extend/shorten, stop/skip,
+# and the lazy finalisation that turns expired rows into results.
 ```
 
 ## 2. Google-Style Docstrings
