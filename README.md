@@ -30,13 +30,20 @@ Ends:    11:23 PM
 
 ## How It Works
 
-The timer is a **passive state machine**. `perido start` writes a session
-row with an end time; nothing runs in the background. Every subsequent
-command first checks the database for sessions whose end time has passed,
-finalises them (recording completions, advancing cycles), and then reports
-the current state. If you start a 25-minute session and close the laptop,
-returning an hour later shows the session completed and — if you were in a
-cycle — the next phase already started.
+The timer is a **passive state machine** — nothing ever runs in the
+background:
+
+1. **Write.** Starting a session, break, or cycle inserts one row into the
+   SQLite database with its planned end time; the process then exits.
+2. **Finalise lazily.** Every command first checks for sessions whose end
+   time has passed and completes them: results are recorded, cycle phases
+   advance starting from *now* (missed time is never backfilled), and
+   finished cycles close with a summary.
+3. **Report.** The command then prints the current state.
+
+If you start a 25-minute session and close the laptop, returning an hour
+later shows the session completed and — if you were in a cycle — the next
+phase already started.
 
 ## Installation
 
@@ -55,6 +62,9 @@ Verify:
 ```bash
 perido --version               # perido 1.4.0
 ```
+
+`requirements.txt` installs pytest for running the test suite; it is not
+needed to use the tool itself.
 
 ## Command-Line Usage
 
@@ -77,9 +87,9 @@ perido --version               # perido 1.4.0
 With no flag they use the configured medium duration — except `break`,
 which defaults to short.
 
-Add `-w` / `--watch` to `start`, `break`, or `status` to stay in the
-terminal and watch the timer count down live. Ctrl-C stops watching only;
-the session keeps running.
+Add `-w` / `--watch` to `start`, `break`, `cycle`, or `status` to stay in
+the terminal and watch the timer count down live. Ctrl-C stops watching
+only; the session keeps running.
 
 ### Cycles
 
@@ -138,6 +148,40 @@ history exists to make them meaningful.
 | `perido config` | Show current configuration |
 | `perido config set KEY VALUE` | Change one value |
 | `perido config reset` | Restore all defaults |
+
+### Example Session
+
+```bash
+# A quick 10-minute focus sprint
+perido start --extrashort
+
+# Check what is running and how long is left
+perido status
+
+# Need more time? Push the end out five minutes
+perido extend 5
+
+# Wrapping up sooner than planned? Pull the end in three minutes
+perido shorten 3
+
+# Stop now — the minutes already completed still count
+perido stop
+
+# Take a break with the 3-minute preset
+perido break --extrashort
+
+# Or run the full classic Pomodoro day, watched live
+perido cycle classic -w
+
+# Review your progress
+perido history --today
+perido stats
+perido week
+
+# Tune defaults without editing any files
+perido config set focus.medium 30
+perido config set cycles.sprint 15,3,15
+```
 
 ## Configuration
 
@@ -201,7 +245,9 @@ PERIDO_HOME=/tmp/demo perido start
 | `A Pomodoro session is already active.` | Only one session can run at a time. Check `perido status`, then `stop`, `skip`, or wait it out. |
 | `No active Pomodoro session.` | `stop` / `pause` / `extend` / `shorten` / `skip` need a running session. |
 | `Cannot shorten by N minutes — ...` | The session has less time left than requested. Use a smaller number, or `extend` first if you meant to reshape it. |
-| `No paused Pomodoro session to resume.` | The session isn't paused. |
+| `No paused Pomodoro session to resume.` | The session isn't paused. Check `perido status`. |
+| `Timer is already paused.` | Nothing is ticking right now. `resume` continues the session. |
+| `No active Pomodoro session to pause.` | Pause needs a running session; start one first. |
 | `Unknown cycle 'name'.` | Run `perido config` to list valid cycle names. |
 | `Unknown key. Valid keys: ...` | Config keys are dotted presets like `focus.long` or `cycles.classic`. |
 | `--watch requires an interactive terminal.` | `--watch` needs a real TTY; run it directly in your shell. |
@@ -210,36 +256,53 @@ PERIDO_HOME=/tmp/demo perido start
 
 ```
 perido/
-├── CHANGELOG.md
-├── LICENSE
-├── README.md
-├── TODO.md
+├── CHANGELOG.md                   # Version history and release notes.
+├── LICENSE                        # MIT license.
+├── README.md                      # This file.
+├── TODO.md                        # Planned work, priorities, and ideas
+│                                  # (see docs/maintain_todo.md).
 ├── docs/
-│   ├── code_review_guide.md
-│   ├── commenting_guidelines.md
-│   ├── maintain_todo.md
-│   └── update_changelog.md
+│   ├── code_review_guide.md       # Pre-release architectural audit checklist.
+│   ├── commenting_guidelines.md   # Docstring and inline comment conventions.
+│   ├── maintain_todo.md           # How to keep TODO.md up to date.
+│   └── update_changelog.md        # Numbered release and changelog workflow.
 ├── perido/
-│   ├── __init__.py
-│   ├── cli.py
-│   ├── config.py
-│   ├── cycles.py
-│   ├── database.py
-│   ├── insights.py
-│   ├── stats.py
-│   └── timer.py
-├── pyproject.toml
-├── requirements.txt
+│   ├── __init__.py                # Package marker: __version__ and PeridoError.
+│   ├── cli.py                     # Argument parsing, terminal rendering, and
+│   │                              # the interactive watch loop.
+│   ├── config.py                  # Configuration defaults, JSON persistence,
+│   │                              # and duration resolution.
+│   ├── cycles.py                  # Cycle presets and the focus/break
+│   │                              # transition state machine.
+│   ├── database.py                # SQLite persistence layer: data directory,
+│   │                              # schema, sessions, and cycles.
+│   ├── insights.py                # Deterministic, rule-based observations
+│   │                              # about the user's focus history.
+│   ├── stats.py                   # Focus journey statistics: daily, weekly,
+│   │                              # all-time, and behavioural.
+│   └── timer.py                   # Session lifecycle state machine: start,
+│                                  # pause, resume, extend, shorten, stop,
+│                                  # skip, and lazy finalisation of expired
+│                                  # sessions.
+├── pyproject.toml                 # Packaging; version sourced dynamically
+│                                  # from perido.__version__.
+├── requirements.txt               # Test-only dependency: pytest.
 └── tests/
-    ├── conftest.py
-    ├── test_cli.py
-    ├── test_config.py
-    ├── test_cycles.py
-    ├── test_database.py
-    ├── test_insights.py
-    ├── test_stats.py
-    ├── test_timer.py
-    └── test_version.py
+    ├── conftest.py                # Shared fixtures: isolated data directory,
+    │                              # fake clock, session seeder.
+    ├── test_cli.py                # Command dispatch, rendering, flag
+    │                              # handling, and error output.
+    ├── test_config.py             # Defaults, persistence, key/value validation.
+    ├── test_cycles.py             # Plans, automatic transitions, abandonment,
+    │                              # and recovery.
+    ├── test_database.py           # Schema, queries, and finalisation
+    │                              # primitives.
+    ├── test_insights.py           # Trigger conditions for each insight rule.
+    ├── test_stats.py              # Streaks, completion rates, hours, and
+    │                              # weekday aggregates.
+    ├── test_timer.py              # Session semantics including extend,
+    │                              # shorten, and pause behaviour.
+    └── test_version.py            # Installed metadata matches __version__.
 ```
 
 ## Tests
