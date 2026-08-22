@@ -269,13 +269,117 @@ Verify that documentation matches the actual code.
 
 ---
 
-## 7. Open-Ended: Creative and Structural Analysis
+## 7. Security Review
+
+A periodic audit of anything that could let another person manipulate
+project data or harm a machine through the repository's artifacts. Run
+it before each release and whenever new input paths, file writes, or
+dependencies appear.
+
+### 7a. Scope and Threat Model
+
+Perido is a stdlib-only, offline CLI. Security here means:
+
+- Repository visitors who read or clone the code must not risk code
+  execution, credential exposure, or file damage by doing so.
+- Installing and running the tool must not execute anything beyond the
+  documented behaviour.
+- The tool's own state files (`perido.db`, `config.json`) must not
+  become a manipulation vector: hand-edited or hostile values may be
+  rejected for that user, but must never corrupt storage, escape the
+  data directory, or crash the tool into an inconsistent state.
+- The supply chain stays empty: no runtime dependencies, no
+  install-time scripts, no network calls.
+
+Adversaries to consider: a malicious patch submitted to the repo, a
+hand-crafted state file, a hostile environment (`PERIDO_HOME` pointing
+anywhere on disk), and upstream dependency compromise (dev-only today).
+
+### 7b. Vulnerability Classes Checklist
+
+Work through every class. "How to check" points to a concrete sweep;
+run it fresh at each audit rather than trusting earlier results.
+
+| Class | How to check | Baseline severity |
+|-------|--------------|-------------------|
+| Secrets in git | Tree and history sweep (note 1). | Very high |
+| Exec primitives | Grep sweep (note 2); justify every hit. | Very high |
+| Query injection | Placeholder audit (note 3). | High |
+| Path traversal | Write-target enumeration (note 4). | High |
+| Numeric validation | Non-finite/extreme input probes (note 5). | Medium |
+| Terminal injection | Config-to-screen string trace (note 6). | Medium |
+| Supply chain | Dependency and hook audit (note 7). | Medium |
+| Data integrity | Corruption fallback drills (note 8). | Low |
+| Repo hygiene | Bootstrap and workflow review (note 9). | Contextual |
+
+1. Grep tracked files **and** full history (`git log -p`) for
+   credentials, tokens, keys, and private URLs; confirm `.gitignore`
+   covers local artefacts such as virtualenvs and scratch notes.
+2. Grep for `eval`, `exec`, `__import__`, `subprocess`, `os.system`,
+   `pickle`, `marshal`, and unsafe YAML loading. Every hit needs a
+   written justification in the audit note.
+3. Confirm every query binds values through placeholders; interpolated
+   fragments must be compile-time constants (whitelists, integer
+   casts), never user- or config-derived strings.
+4. Enumerate every file-write target; trace which parts derive from
+   env, config, or argv; confirm nothing outside the data directory is
+   touched.
+5. Probe argv parsers and JSON loading with non-finite and extreme
+   numbers; confirm rejection before values reach storage.
+6. Trace strings originating in config or state files to terminal
+   output; control characters must not reach the screen raw.
+7. Runtime dependency count stays zero; dev dependencies pinned with a
+   version floor; no post-install hooks.
+8. Corrupt or truncate each state file; confirm clean fallback to
+   defaults rather than a traceback or silent corruption.
+9. Review workflows, hooks, and setup scripts for what executes on
+   clone/bootstrap; check branch protection and the collaborator list.
+
+### 7c. Severity Taxonomy and Reporting Protocol
+
+Severity levels, calibrated to this project:
+
+| Level | Definition |
+|-------|------------|
+| Very high | Attacker code execution or credential exposure via normal use of the repo or tool. |
+| High | Modifies files or data outside the tool's own scope. |
+| Medium | Degrades integrity of the tool's own data or spoofs screen output, given tampered state files. |
+| Low | Hardening gap with no direct manipulation path. |
+
+Reporting protocol:
+
+1. Findings are reported privately to the project owner first — in the
+   review session or a private note — including location, scenario,
+   severity, and the proposed fix. When a class has no strong fix,
+   say so explicitly and list mitigations instead.
+2. Public-facing artefacts — documentation, `TODO.md`,
+   `CHANGELOG.md`, commit messages, and issues — reference security
+   issues **only generically**: class and severity, never specific
+   inputs, code locations, exploit steps, or working exploits. Prefer
+   hardening language ("tighten numeric validation") over vulnerability
+   language. Specifics stay in private notes only.
+3. Very high and high findings block releases until fixed. Medium and
+   low findings route to `TODO.md` (`#bug` / `#infra`) for an owner
+   decision.
+4. Any public disclosure happens only after the fix has shipped, and
+   even then at the generic level described above.
+
+### 7d. Post-Fix Verification
+
+Every accepted fix lands with a regression test at the matching layer
+(argument parsing, configuration loader, renderer, database). Rerun the
+full 7b sweep once more before closing the audit, and note the audit
+date against the release it gated.
+
+---
+
+## 8. Open-Ended: Creative and Structural Analysis
 
 These questions require judgment and are the heart of the review. They
 have no right answer — the goal is to identify improvements and surface
 design drift.
 
-### 7a. Module Boundaries and Cohesion
+### 8a. Module Boundaries and Cohesion
 
 - `cli.py` is the largest module (~620 lines): parsing, rendering,
   and thirteen command handlers. Would splitting rendering helpers
@@ -285,7 +389,7 @@ design drift.
   first") documented in one place and enforced by tests, or spread
   as folklore?
 
-### 7b. CLI Design
+### 8b. CLI Design
 
 - Should `history` grow `--kind focus|break` and `--cycle NAME`
   filters as the database grows?
@@ -294,21 +398,21 @@ design drift.
 - Would a `perido undo` (revert last transition) be worth its
   complexity?
 
-### 7c. Statistics Accuracy
+### 8c. Statistics Accuracy
 
 - The median "typical session" ignores breaks — is that the right
   definition, or should long breaks count?
 - Peak-hour windows don't wrap midnight; late-night users get
   split windows. Worth fixing?
 
-### 7d. Test Economics
+### 8d. Test Economics
 
 - The suite runs in under a second; keep it that way. Reject any
   test that sleeps or touches the network.
 - Are there behaviours only covered by manual smoke tests (e.g.
   `--watch` redraw) that deserve a pty-based test?
 
-### 7e. Next-Action Synthesis
+### 8e. Next-Action Synthesis
 
 Based on the findings above, produce a list of the top 3–5 actions.
 Each entry must be one of two forms:
