@@ -341,9 +341,9 @@ Severity levels, calibrated to this project:
 
 | Level | Definition |
 |-------|------------|
-| Very high | Attacker code execution or credential exposure via normal use of the repo or tool. |
+| Very high | Attacker code execution or credential exposure via normal use. |
 | High | Modifies files or data outside the tool's own scope. |
-| Medium | Degrades integrity of the tool's own data or spoofs screen output, given tampered state files. |
+| Medium | Corrupts the tool's own data or spoofs screen output, given tampered state files. |
 | Low | Hardening gap with no direct manipulation path. |
 
 Reporting protocol:
