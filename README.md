@@ -43,7 +43,7 @@ cycle — the next phase already started.
 Requires Python 3.10+ (tested on 3.12). No third-party runtime dependencies.
 
 ```bash
-git clone <repo-url> perido
+git clone https://github.com/szuck12/perido.git perido
 cd perido
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
