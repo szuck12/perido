@@ -488,6 +488,7 @@ def cmd_config(args) -> int:
 def _render_config(cfg: dict) -> str:
     """Format the configuration screen."""
     names = {
+        "extrashort": "Extra-short",
         "short": "Short",
         "medium": "Medium",
         "long": "Long",
@@ -548,7 +549,8 @@ def _add_duration_flags(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="perido",
-        description="Perido — a local-first command-line Pomodoro timer.",
+        description="A command-line Pomodoro timer with named cycles, "
+        "focus statistics, insights, and local SQLite storage.",
     )
     parser.add_argument(
         "--version", action="version", version=f"perido {__version__}"

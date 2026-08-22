@@ -30,6 +30,15 @@ def test_start_preset_flags(home, clock, capsys):
     assert "30:00" in capsys.readouterr().out
 
 
+def test_start_extrashort_preset(home, clock, capsys):
+    cli.main(["start", "--extrashort"])
+    out = capsys.readouterr().out
+    assert "10:00" in out
+    timer.stop()
+    cli.main(["break", "--extrashort"])
+    assert "3:00" in capsys.readouterr().out
+
+
 def test_start_rejects_conflicting_flags(home, clock):
     with pytest.raises(SystemExit) as excinfo:
         cli.main(["start", "--short", "--long"])

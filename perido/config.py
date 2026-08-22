@@ -9,11 +9,11 @@ from typing import Any
 
 from . import PeridoError, database
 
-PRESETS = ("short", "medium", "long", "extralong")
+PRESETS = ("extrashort", "short", "medium", "long", "extralong")
 
 DEFAULTS: dict[str, Any] = {
-    "focus": {"short": 15, "medium": 25, "long": 50, "extralong": 90},
-    "break": {"short": 5, "medium": 10, "long": 15, "extralong": 30},
+    "focus": {"extrashort": 10, "short": 15, "medium": 25, "long": 50, "extralong": 90},
+    "break": {"extrashort": 3, "short": 5, "medium": 10, "long": 15, "extralong": 30},
     "cycles": {
         # Alternating focus/break minutes, always starting with focus.
         # Each preset name describes its plan's shape.

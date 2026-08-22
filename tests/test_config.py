@@ -13,8 +13,20 @@ from perido import PeridoError, config
 
 def test_defaults_when_no_file(home):
     cfg = config.load()
-    assert cfg["focus"] == {"short": 15, "medium": 25, "long": 50, "extralong": 90}
-    assert cfg["break"] == {"short": 5, "medium": 10, "long": 15, "extralong": 30}
+    assert cfg["focus"] == {
+        "extrashort": 10,
+        "short": 15,
+        "medium": 25,
+        "long": 50,
+        "extralong": 90,
+    }
+    assert cfg["break"] == {
+        "extrashort": 3,
+        "short": 5,
+        "medium": 10,
+        "long": 15,
+        "extralong": 30,
+    }
     assert cfg["cycles"]["classic"] == [
         {"kind": "focus", "minutes": 25},
         {"kind": "break", "minutes": 5},
@@ -141,9 +153,19 @@ def test_parse_plan_validation():
 
 def test_resolve_duration_presets_and_exact(home):
     assert config.resolve_duration("focus") == 25
+    assert config.resolve_duration("focus", "extrashort") == 10
     assert config.resolve_duration("focus", "long") == 50
+    assert config.resolve_duration("break", "extrashort") == 3
     assert config.resolve_duration("break", "extralong") == 30
     assert config.resolve_duration("focus", duration=37) == 37.0
+
+
+def test_unknown_preset_error_lists_all_presets(home):
+    with pytest.raises(PeridoError) as excinfo:
+        config.set_value("focus.giant", "120")
+    message = str(excinfo.value)
+    for preset in ("extrashort", "short", "medium", "long", "extralong"):
+        assert f"break.{preset}" in message
 
 
 def test_resolve_duration_rejects_nonpositive(home):
