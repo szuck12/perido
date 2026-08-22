@@ -236,7 +236,7 @@ def test_cycle_unknown_name_lists_available(home, clock, capsys):
     err = capsys.readouterr().err
     assert code == 1
     assert "Unknown cycle 'mythical'" in err
-    for known in ("classic", "sprint", "deep", "tabata"):
+    for known in ("classic", "monolith", "sprint", "summit"):
         assert known in err
 
 

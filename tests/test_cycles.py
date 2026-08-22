@@ -41,21 +41,23 @@ def cycle_row(cycle_id):
     ("name", "focus_minutes", "breaks"),
     [
         ("classic", [25, 25, 25, 25], [5, 5, 5, 15]),
+        ("clockwork", [20, 20, 20, 20, 20], [5, 5, 5, 5]),
+        ("deep", [50, 50, 50], [10, 10, 30]),
+        ("descent", [40, 25, 15], [5, 5]),
+        ("extended", [90, 90], [20, 30]),
+        ("flow", [60, 60], [10]),
+        ("grind", [25, 25, 25, 25, 25], [3, 3, 3, 3]),
+        ("ladder", [10, 20, 30], [2, 3, 5]),
+        ("marathon", [30] * 6, [5, 5, 5, 5, 5, 20]),
+        ("monolith", [180], []),
+        ("passion", [60], []),
         ("short", [15, 15, 15], [5, 5]),
         ("sprint", [10, 10, 10], [2, 2]),
-        ("deep", [50, 50, 50], [10, 10, 30]),
-        ("extended", [90, 90], [20, 30]),
-        ("ladder", [10, 20, 30], [2, 3, 5]),
-        ("descent", [40, 25, 15], [5, 5]),
+        ("summit", [100, 100], [15, 20]),
         ("twist", [45, 15, 45], [10, 5, 10]),
-        ("clockwork", [20, 20, 20, 20], [5, 5, 5]),
-        ("passion", [60], []),
-        ("marathon", [30] * 6, [5, 5, 5, 5, 5, 20]),
-        ("tabata", [5, 5, 5, 5], [1, 1, 1, 1]),
+        ("ultra", [150, 150], [20, 30]),
         ("warmup", [10, 15], [5, 5]),
-        ("flow", [60, 60], [10]),
         ("zen", [45, 45, 45], [5, 5]),
-        ("grind", [25, 25, 25], [3, 3]),
     ],
 )
 def test_preset_plans(home, clock, name, focus_minutes, breaks):
@@ -84,7 +86,15 @@ def test_unknown_cycle_lists_available(home, clock):
     with pytest.raises(PeridoError) as excinfo:
         cycles.plan_for("mythical")
     message = str(excinfo.value)
-    for known in ("classic", "short", "sprint", "deep", "extended", "tabata"):
+    for known in (
+        "classic",
+        "clockwork",
+        "monolith",
+        "short",
+        "sprint",
+        "summit",
+        "ultra",
+    ):
         assert known in message
 
 
