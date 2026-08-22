@@ -137,6 +137,15 @@ def test_collect_cycles_completed(home, clock, seed):
     assert dict(sections["All time"])["Cycles completed"] == "1"
 
 
+def test_negative_extensions_not_counted(home, clock, seed):
+    seed(hour=9, extension_minutes=-10)
+    seed(days_ago=1, hour=9)
+
+    behavior = dict(stats.collect()["Behavior"])
+    assert behavior["Extensions"] == "0"
+    assert behavior["Extended time"] == "0m"
+
+
 # ---------------------------------------------------------------------
 # Weekly chart data
 # ---------------------------------------------------------------------

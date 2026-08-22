@@ -152,7 +152,7 @@ def _extension_rule(rows: list[dict], now_local) -> str | None:
     completed = _completed(rows)
     if len(completed) < MIN_SESSIONS:
         return None
-    extended = sum(1 for r in completed if r["extension_minutes"])
+    extended = sum(1 for r in completed if r["extension_minutes"] > 0)
     rate = extended / len(completed)
     if rate < 0.3:
         return None

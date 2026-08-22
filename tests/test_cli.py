@@ -73,6 +73,43 @@ def test_extend_output(home, clock, capsys):
     assert "15:00" in out
 
 
+def test_shorten_output(home, clock, capsys):
+    cli.main(["start"])
+    clock.advance(minutes=5)
+    capsys.readouterr()
+    code = cli.main(["shorten", "10"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "shortened by 10 minutes" in out
+    assert "New end time:" in out
+    assert "10:00" in out
+
+
+def test_shorten_without_session(home, clock, capsys):
+    code = cli.main(["shorten", "10"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "No active Pomodoro session to shorten." in err
+    assert "perido start" in err
+
+
+@pytest.mark.parametrize("bad", ["abc", "-5", "0"])
+def test_shorten_invalid_values(home, clock, bad):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["shorten", bad])
+    assert excinfo.value.code == 2
+
+
+def test_shorten_more_than_remaining(home, clock, capsys):
+    cli.main(["start"])
+    clock.advance(minutes=20)
+    capsys.readouterr()
+    code = cli.main(["shorten", "30"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "only has 05:00 remaining" in err
+
+
 def test_pause_and_resume_outputs(home, clock, capsys):
     cli.main(["start"])
     clock.advance(minutes=7)
@@ -267,6 +304,17 @@ def test_history_cycle_and_extension_tags(home, clock, seed, capsys):
     out = capsys.readouterr().out
     assert "+10m ext" in out
     assert "Classic 1/4" in out
+
+
+def test_history_shows_trimmed_tag(home, clock, seed, capsys):
+    # Seed stores planned = minutes + extension, so a 25-minute session
+    # trimmed by 10 is seeded as minutes=35 with extension -10.
+    seed(minutes=35, extension_minutes=-10)
+    cli.main(["history"])
+    out = capsys.readouterr().out
+    assert "-10m trimmed" in out
+    # Duration column reflects the shortened window: planned + ext.
+    assert "15m" in out
 
 
 def test_history_today_filter(home, clock, seed, capsys):

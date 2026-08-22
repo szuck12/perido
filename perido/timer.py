@@ -206,6 +206,48 @@ def extend(minutes: float) -> dict[str, Any]:
         conn.close()
 
 
+def shorten(minutes: float) -> dict[str, Any]:
+    """Shorten the active session by a positive number of minutes.
+
+    The trim is recorded as negative extension time, so every derived
+    total (planned + extension) stays consistent across history and
+    statistics without schema changes.
+
+    Raises:
+        PeridoError: If nothing is active, minutes is not positive, or
+            the session has less remaining time than requested.
+    """
+    if minutes <= 0:
+        raise PeridoError("Shortening must be a positive number of minutes.")
+    finalize_expired()
+    conn = database.connect()
+    try:
+        session = database.get_active_session(conn)
+        if not session:
+            raise PeridoError(
+                "No active Pomodoro session to shorten.\n"
+                "Start one with:\n"
+                "  perido start"
+            )
+        remaining = remaining_seconds(session)
+        if minutes * 60 >= remaining:
+            label = "break" if session["kind"] == "break" else "session"
+            raise PeridoError(
+                f"Cannot shorten by {minutes:g} minutes —"
+                f" the {label} only has {_mmss(remaining)} remaining."
+            )
+        new_end = _parse(session["end_time"]) - timedelta(minutes=minutes)
+        database.update_session(
+            conn,
+            session["id"],
+            end_time=database.iso(new_end),
+            extension_minutes=session["extension_minutes"] - minutes,
+        )
+        return database.get_session(conn, session["id"])
+    finally:
+        conn.close()
+
+
 def stop() -> dict[str, Any]:
     """Stop the active session early, recording it as interrupted.
 

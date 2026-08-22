@@ -314,6 +314,16 @@ def cmd_extend(args) -> int:
     return 0
 
 
+def cmd_shorten(args) -> int:
+    session = timer.shorten(args.minutes)
+    ends = _local(database.parse_ts(session["end_time"]))
+    print(f"⏱ Session shortened by {_trim(args.minutes)} minutes.")
+    print()
+    print(f"New end time: {fmt_tod(ends)}")
+    print(f"Time remaining: {fmt_clock(timer.remaining_seconds(session))}")
+    return 0
+
+
 def cmd_skip(args) -> int:
     timer.skip()
     print("Session skipped.")
@@ -408,8 +418,11 @@ def _history_row(conn, row: dict) -> tuple[str, str, str, str]:
         duration = "—"
         result = "○ Skipped"
     tags = []
-    if row["extension_minutes"]:
-        tags.append(f"+{_trim(row['extension_minutes'])}m ext")
+    ext = row["extension_minutes"]
+    if ext > 0:
+        tags.append(f"+{_trim(ext)}m ext")
+    elif ext < 0:
+        tags.append(f"-{_trim(-ext)}m trimmed")
     cycle = database.get_cycle(conn, row["cycle_id"])
     if cycle and row["kind"] == "focus":
         steps = database.json_loads(cycle["plan"])
@@ -558,6 +571,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("extend", help="extend the active session")
     p.add_argument("minutes", type=_positive_minutes, metavar="MINUTES")
     p.set_defaults(func=cmd_extend)
+
+    p = sub.add_parser("shorten", help="shorten the active session")
+    p.add_argument("minutes", type=_positive_minutes, metavar="MINUTES")
+    p.set_defaults(func=cmd_shorten)
 
     p = sub.add_parser(
         "skip", help="abandon the session without recording focus time"

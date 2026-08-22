@@ -141,7 +141,7 @@ def collect() -> dict[str, list[tuple[str, str]]]:
             row["actual_seconds"] or 0
         )
 
-    extended = [r for r in rows if r["extension_minutes"]]
+    extended = [r for r in rows if r["extension_minutes"] > 0]
     today_avg = (
         sum(r["actual_seconds"] or 0 for r in today_done) / len(today_done)
         if today_done

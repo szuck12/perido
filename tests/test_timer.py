@@ -183,6 +183,71 @@ def test_extended_session_completes_at_new_end(home, clock):
 
 
 # ---------------------------------------------------------------------
+# Shorten
+# ---------------------------------------------------------------------
+
+
+def test_shorten_pulls_end_time_earlier(home, clock):
+    timer.start(25)
+    clock.advance(minutes=5)
+    shortened = timer.shorten(10)
+    assert timer.remaining_seconds(shortened) == 10 * 60
+    # Recorded as negative extension so planned totals stay consistent.
+    assert shortened["extension_minutes"] == -10
+    assert timer.planned_seconds(shortened) == 15 * 60
+
+
+def test_shortened_session_completes_at_new_end(home, clock):
+    timer.start(25)
+    timer.shorten(20)
+    clock.advance(minutes=6)
+    events = timer.finalize_expired()
+    assert [e["event"] for e in events] == ["complete"]
+    conn = database.connect()
+    rows = database.query_sessions(conn, statuses=("completed",))
+    conn.close()
+    assert rows[0]["actual_seconds"] == 5 * 60
+
+
+def test_shorten_while_paused(home, clock):
+    timer.start(25)
+    timer.pause()
+    shortened = timer.shorten(5)
+    assert shortened["extension_minutes"] == -5
+    timer.resume()
+    assert timer.remaining_seconds(shortened) == 20 * 60
+
+
+def test_extend_then_shorten_roundtrip(home, clock):
+    timer.start(25)
+    timer.extend(10)
+    restored = timer.shorten(10)
+    assert restored["extension_minutes"] == 0
+    assert timer.planned_seconds(restored) == 25 * 60
+
+
+def test_shorten_requires_positive(home, clock):
+    timer.start(25)
+    for bad in (0, -5, -0.5):
+        with pytest.raises(PeridoError, match="positive"):
+            timer.shorten(bad)
+
+
+def test_shorten_without_session(home, clock):
+    with pytest.raises(PeridoError, match="No active Pomodoro session to shorten"):
+        timer.shorten(10)
+
+
+def test_shorten_more_than_remaining_rejected(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)  # 15 minutes left
+    with pytest.raises(PeridoError, match="only has 15:00 remaining"):
+        timer.shorten(15)  # exactly the remainder would leave nothing
+    with pytest.raises(PeridoError, match="only has 15:00 remaining"):
+        timer.shorten(20)
+
+
+# ---------------------------------------------------------------------
 # Stop / skip
 # ---------------------------------------------------------------------
 

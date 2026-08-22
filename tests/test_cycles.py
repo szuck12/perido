@@ -269,6 +269,19 @@ def test_extended_focus_within_cycle(home, clock):
     assert rows[0]["actual_seconds"] == 20 * 60
 
 
+def test_shortened_focus_advances_cycle_normally(home, clock):
+    cycles.start("short")  # 15F 5B ...
+    timer.shorten(10)  # focus now ends after 5 minutes
+    clock.advance(minutes=6)
+    events = timer.finalize_expired()
+    assert [e["event"] for e in events] == ["complete", "phase_start"]
+    phase = events[1]
+    assert phase["kind"] == "break"
+    current = active()
+    assert current["kind"] == "break"
+    assert current["planned_minutes"] == 5
+
+
 # ---------------------------------------------------------------------
 # Summaries and labels
 # ---------------------------------------------------------------------

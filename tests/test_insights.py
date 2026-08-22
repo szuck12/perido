@@ -95,6 +95,18 @@ def test_extension_insight(home, clock, seed):
     assert any("extend 40% of your sessions" in m for m in messages)
 
 
+def test_trimmed_sessions_do_not_trigger_extension_insight(home, clock, seed):
+    for index in range(10):
+        seed(
+            days_ago=8 + index,
+            minutes=25,
+            extension_minutes=-5,
+            hour=(7 + index * 2) % 24,
+        )
+    seed(status="interrupted", actual_seconds=60)
+    assert not any("extend" in m for m in insights.get_insights())
+
+
 def test_weak_day_insight(home, day_clock, seed):
     friday_back = days_since_weekday(day_clock, 4)  # Friday
     monday_back = days_since_weekday(day_clock, 0)
