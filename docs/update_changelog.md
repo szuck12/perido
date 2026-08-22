@@ -20,6 +20,10 @@ When a component is bumped, all components to its right reset to zero
 While the project is pre-1.0, MINOR bumps may contain breaking changes —
 but note them explicitly under a `### Changed` heading.
 
+Record the choice by setting `__version__` in `perido/__init__.py` — it is
+the single source of truth; `pyproject.toml` derives its version from it
+automatically, so never pin a static version there.
+
 ## Step 2 — Update CHANGELOG.md
 
 Add a new section at the top of `CHANGELOG.md`:
