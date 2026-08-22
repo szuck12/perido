@@ -195,11 +195,11 @@ def test_cycle_banner(home, clock, capsys):
 
 
 def test_cycle_unknown_name_lists_available(home, clock, capsys):
-    code = cli.main(["cycle", "marathon"])
+    code = cli.main(["cycle", "mythical"])
     err = capsys.readouterr().err
     assert code == 1
-    assert "Unknown cycle 'marathon'" in err
-    for known in ("classic", "sprint", "deep"):
+    assert "Unknown cycle 'mythical'" in err
+    for known in ("classic", "sprint", "deep", "tabata"):
         assert known in err
 
 

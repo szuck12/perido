@@ -45,6 +45,17 @@ def cycle_row(cycle_id):
         ("sprint", [10, 10, 10], [2, 2]),
         ("deep", [50, 50, 50], [10, 10, 30]),
         ("extended", [90, 90], [20, 30]),
+        ("ladder", [10, 20, 30], [2, 3, 5]),
+        ("descent", [40, 25, 15], [5, 5]),
+        ("twist", [45, 15, 45], [10, 5, 10]),
+        ("clockwork", [20, 20, 20, 20], [5, 5, 5]),
+        ("passion", [60], []),
+        ("marathon", [30] * 6, [5, 5, 5, 5, 5, 20]),
+        ("tabata", [5, 5, 5, 5], [1, 1, 1, 1]),
+        ("warmup", [10, 15], [5, 5]),
+        ("flow", [60, 60], [10]),
+        ("zen", [45, 45, 45], [5, 5]),
+        ("grind", [25, 25, 25], [3, 3]),
     ],
 )
 def test_preset_plans(home, clock, name, focus_minutes, breaks):
@@ -53,11 +64,27 @@ def test_preset_plans(home, clock, name, focus_minutes, breaks):
     assert [s["minutes"] for s in steps if s["kind"] == "break"] == breaks
 
 
+def test_single_focus_cycle_completes_without_break(home, clock):
+    """Passion is a lone focus step: it completes straight into the
+    cycle summary with no break phases."""
+    cycles.start("passion")
+    clock.advance(minutes=60)
+    events = timer.finalize_expired()
+    assert [e["event"] for e in events] == ["complete", "cycle_complete"]
+    assert events[-1]["summary"] == {
+        "focus_sessions": 1,
+        "focus_minutes": 60,
+        "short_breaks": 0,
+        "long_breaks": 0,
+    }
+    assert active() is None
+
+
 def test_unknown_cycle_lists_available(home, clock):
     with pytest.raises(PeridoError) as excinfo:
-        cycles.plan_for("marathon")
+        cycles.plan_for("mythical")
     message = str(excinfo.value)
-    for known in ("classic", "short", "sprint", "deep", "extended"):
+    for known in ("classic", "short", "sprint", "deep", "extended", "tabata"):
         assert known in message
 
 

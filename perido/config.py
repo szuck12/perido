@@ -16,11 +16,23 @@ DEFAULTS: dict[str, Any] = {
     "break": {"short": 5, "medium": 10, "long": 15, "extralong": 30},
     "cycles": {
         # Alternating focus/break minutes, always starting with focus.
+        # Each preset name describes its plan's shape.
         "classic": [25, 5, 25, 5, 25, 5, 25, 15],
         "short": [15, 5, 15, 5, 15],
         "sprint": [10, 2, 10, 2, 10],
         "deep": [50, 10, 50, 10, 50, 30],
         "extended": [90, 20, 90, 30],
+        "ladder": [10, 2, 20, 3, 30, 5],
+        "descent": [40, 5, 25, 5, 15],
+        "twist": [45, 10, 15, 5, 45, 10],
+        "clockwork": [20, 5, 20, 5, 20, 5, 20],
+        "passion": [60],
+        "marathon": [30, 5, 30, 5, 30, 5, 30, 5, 30, 5, 30, 20],
+        "tabata": [5, 1, 5, 1, 5, 1, 5, 1],
+        "warmup": [10, 5, 15, 5],
+        "flow": [60, 10, 60],
+        "zen": [45, 5, 45, 5, 45],
+        "grind": [25, 3, 25, 3, 25],
     },
 }
 
