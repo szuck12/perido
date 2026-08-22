@@ -23,6 +23,17 @@
 - [x] 2026-08-22 — `perido shorten MINUTES` trims an active session,
       recorded across history and stats as trimmed time (#timer, #cli,
       #stats)
+- [x] 2026-08-22 — Added `--extrashort` preset (10 min focus / 3 min
+      break) (#config, #cli)
+- [x] 2026-08-22 — Cycle roster reworked: removed tabata; added monolith,
+      summit, and ultra long-block cycles; lengthened clockwork and grind
+      to five focus periods (18 cycles total, documented alphabetically)
+      (#cycles, #docs)
+- [x] 2026-08-22 — README overhaul: consolidated cycle tables into one
+      reference with work/break totals and expanded test instructions
+      (#docs)
+- [x] 2026-08-22 — Release 1.4.0: changelog history restated as releases
+      1.0.0 through 1.4.0 (#docs)
 
 ## High Priority
 
@@ -44,6 +55,6 @@
 
 - [ ] Custom cycles with user-chosen names — define new named cycles
       (e.g. `perido cycle new "thesis" 45,10,45,15`) instead of only
-      adjusting the sixteen built-in presets (#cycles, #cli)
+      adjusting the eighteen built-in presets (#cycles, #cli)
 - [ ] Desktop notifications when a session or cycle phase ends (#cli)
 - [ ] Export history to CSV for external analysis (#stats)

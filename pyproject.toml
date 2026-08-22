@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "perido"
-description = "Perido — a local-first command-line Pomodoro timer with a focus journey."
+description = "A command-line Pomodoro timer with named cycles, focus statistics, insights, and local SQLite storage."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

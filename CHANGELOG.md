@@ -5,7 +5,29 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2026-08-22
+## [1.4.0] - 2026-08-22
+
+### Added
+- `--extrashort` preset for quick sessions: 10 minutes of focus and
+  3-minute breaks by default.
+- Three long-form cycles with 100+-minute focus blocks (18 total):
+  monolith (one 180-minute block), summit (100·15·100·20), and
+  ultra (150·20·150·30).
+
+### Changed
+- `clockwork` and `grind` each lengthened to five focus periods.
+- Built-in cycles are documented alphabetically in a single consolidated
+  reference table showing every period plus work/break totals.
+- README test instructions expanded with single-file and single-test
+  invocations.
+- 169 tests (was 165), covering the extrashort preset and every default
+  cycle plan.
+
+### Removed
+- `tabata` cycle: its five-minute bursts were too short to plan real
+  work around.
+
+## [1.3.0] - 2026-08-21
 
 ### Added
 - `perido shorten MINUTES` — pulls the active session's end time earlier;
@@ -14,8 +36,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - History rows mark shortened sessions with `-Nm trimmed`, mirroring the
   existing extension tag.
 - Eleven new built-in cycles whose names describe their shape (16 total):
-  ladder, descent, twist, clockwork, passion, marathon, tabata, warmup,
-  flow, zen, and grind.
+  clockwork, descent, flow, grind, ladder, marathon, passion, tabata,
+  twist, warmup, and zen.
 - 165 tests (was 136), covering shorten semantics, trimmed history tags,
   and every default cycle plan.
 
@@ -23,7 +45,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Extension-habit statistics and insights no longer count shortened
   sessions as extensions.
 
-## [0.2.0] - 2026-08-22
+## [1.2.0] - 2026-08-19
 
 ### Changed
 - Project renamed from cli-pomodoro to **Perido**: the package, the
@@ -36,19 +58,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Packaging derives its version dynamically from `perido.__version__`,
   removing the duplicate static version pin in `pyproject.toml`.
 
-## [0.1.0] - 2026-08-20
+## [1.1.0] - 2026-08-11
 
 ### Added
-- Passive Pomodoro timer with no daemon: every command reads state from a
-  local SQLite database and lazily finalises sessions whose end time has
-  passed, so the timer survives crashes and reboots.
-- Focus sessions and breaks with four configurable presets (short, medium,
-  long, extralong) plus exact `--duration` overrides; pause/resume,
-  extend, stop (partial credit), and skip (no time recorded).
-- Named multi-session cycles (`classic`, `short`, `sprint`, `deep`,
-  `extended`) that auto-advance through alternating focus/break phases and
-  complete with a summary; stopping or skipping mid-cycle abandons the rest.
-- Live `--watch` mode for `start`, `break`, `cycle`, and `status`.
 - `history` table with day labels, results, extension and cycle tags, and
   `--today` / `--week` / `--limit` filters.
 - `stats` journey view — today, this week, all-time, and behaviour sections
@@ -61,3 +73,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `config.json`; `PERIDO_HOME` override for relocating all data.
 - 135 tests covering config, database, timer, cycles, CLI rendering,
   statistics, and insights on a fake clock.
+
+## [1.0.0] - 2026-07-06
+
+### Added
+- Passive Pomodoro timer with no daemon: every command reads state from a
+  local SQLite database and lazily finalises sessions whose end time has
+  passed, so the timer survives crashes and reboots.
+- Focus sessions and breaks with four configurable presets (short, medium,
+  long, extralong) plus exact `--duration` overrides; pause/resume,
+  extend, stop (partial credit), and skip (no time recorded).
+- Named multi-session cycles (`classic`, `short`, `sprint`, `deep`,
+  `extended`) that auto-advance through alternating focus/break phases and
+  complete with a summary; stopping or skipping mid-cycle abandons the rest.
+- Live `--watch` mode for `start`, `break`, `cycle`, and `status`.
