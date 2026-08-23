@@ -34,6 +34,9 @@
       (#docs)
 - [x] 2026-08-22 — Release 1.4.0: changelog history restated as releases
       1.0.0 through 1.4.0 (#docs)
+- [x] 2026-08-22 — Security audit section added to the code review guide;
+      numeric inputs now validate finiteness across argv and config
+      parsing (#docs, #config, #cli, #bug)
 
 ## High Priority
 
@@ -42,6 +45,9 @@
 ## Medium Priority
 
 (Should get done, not urgent.)
+
+- [ ] Validate cycle names loaded from config against a safe charset
+      before they are rendered (#config, #bug)
 
 ## Low Priority
 

@@ -87,6 +87,31 @@ def test_invalid_entries_in_file_are_ignored(home):
     assert "broken" not in cfg["cycles"]
 
 
+def test_non_finite_and_boolean_entries_are_ignored(home):
+    config.config_path().write_text(
+        json.dumps(
+            {
+                "focus": {"short": float("nan"), "long": float("inf")},
+                "break": {"short": True, "long": False},
+                "cycles": {"weird": [float("inf")]},
+            }
+        )
+    )
+    cfg = config.load()
+    assert cfg["focus"]["short"] == 15
+    assert cfg["focus"]["long"] == 50
+    assert cfg["break"]["short"] == 5
+    assert cfg["break"]["long"] == 15
+    assert "weird" not in cfg["cycles"]
+
+
+def test_set_value_rejects_non_finite(home):
+    with pytest.raises(PeridoError):
+        config.set_value("focus.medium", "nan")
+    with pytest.raises(PeridoError):
+        config.set_value("focus.medium", "inf")
+
+
 def test_reset_restores_defaults(home):
     config.set_value("focus.medium", "42")
     assert config.load()["focus"]["medium"] == 42
@@ -148,6 +173,10 @@ def test_parse_plan_validation():
         config.parse_plan([10, 0])
     with pytest.raises(PeridoError):
         config.parse_plan([10, -2])
+    with pytest.raises(PeridoError):
+        config.parse_plan([float("nan"), 5])
+    with pytest.raises(PeridoError):
+        config.parse_plan([10, float("inf")])
     assert config.parse_plan([30]) == [{"kind": "focus", "minutes": 30.0}]
 
 

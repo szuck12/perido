@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import sys
 import time
@@ -519,7 +520,7 @@ def _positive_minutes(text: str) -> float:
         value = float(text)
     except ValueError:
         raise argparse.ArgumentTypeError(f"'{text}' is not a number") from None
-    if value <= 0:
+    if not math.isfinite(value) or value <= 0:
         raise argparse.ArgumentTypeError("must be a positive number of minutes")
     return value
 

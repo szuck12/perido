@@ -63,11 +63,19 @@ def test_extend_without_session(home, clock, capsys):
     assert "perido start" in err
 
 
-@pytest.mark.parametrize("bad", ["abc", "-5", "0"])
+@pytest.mark.parametrize("bad", ["abc", "-5", "0", "nan", "inf", "-inf"])
 def test_extend_invalid_values(home, clock, bad):
     with pytest.raises(SystemExit) as excinfo:
         cli.main(["extend", bad])
     assert excinfo.value.code == 2
+
+
+@pytest.mark.parametrize("bad", ["nan", "inf"])
+def test_start_duration_rejects_non_finite(home, clock, capsys, bad):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["start", "--duration", bad])
+    assert excinfo.value.code == 2
+    assert "positive number of minutes" in capsys.readouterr().err
 
 
 def test_extend_output(home, clock, capsys):

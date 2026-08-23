@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from typing import Any
 
 from . import PeridoError, database
@@ -68,7 +69,7 @@ def parse_plan(steps) -> list[dict[str, Any]]:
         ) from None
     if not values:
         raise PeridoError("A cycle needs at least one focus step.")
-    if any(value <= 0 for value in values):
+    if any(value <= 0 or not math.isfinite(value) for value in values):
         raise PeridoError("Cycle steps must be positive numbers of minutes.")
     return [
         {"kind": "focus" if index % 2 == 0 else "break", "minutes": value}
@@ -101,7 +102,12 @@ def load() -> dict[str, Any]:
         if isinstance(values, dict):
             for key in PRESETS:
                 value = values.get(key)
-                if isinstance(value, (int, float)) and value > 0:
+                if (
+                    isinstance(value, (int, float))
+                    and not isinstance(value, bool)
+                    and math.isfinite(value)
+                    and value > 0
+                ):
                     cfg[section][key] = value
     cycles = user.get("cycles")
     if isinstance(cycles, dict):
@@ -140,7 +146,7 @@ def _number(raw: str, label: str) -> float:
         value = float(raw)
     except ValueError:
         raise PeridoError(f"{label} must be a number (got '{raw}').") from None
-    if value <= 0:
+    if not math.isfinite(value) or value <= 0:
         raise PeridoError(f"{label} must be positive (got {value:g}).")
     return value
 
@@ -212,7 +218,7 @@ def resolve_duration(
         PeridoError: If an exact duration is not positive.
     """
     if duration is not None:
-        if duration <= 0:
+        if not math.isfinite(duration) or duration <= 0:
             raise PeridoError("Duration must be a positive number of minutes.")
         return float(duration)
     return float(load()[kind][preset or "medium"])
