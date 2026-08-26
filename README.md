@@ -49,6 +49,21 @@ phase already started.
 
 Requires Python 3.10+ (tested on 3.12). No third-party runtime dependencies.
 
+### Quick install (recommended)
+
+```bash
+git clone https://github.com/szuck12/perido.git perido
+cd perido
+./setup.sh                     # creates venv, installs, fixes macOS flags
+source .venv/bin/activate
+```
+
+The `setup.sh` script handles the entire setup and automatically fixes a
+macOS iCloud Drive issue that can break the install (see Troubleshooting
+below).
+
+### Manual install
+
 ```bash
 git clone https://github.com/szuck12/perido.git perido
 cd perido
@@ -251,6 +266,7 @@ PERIDO_HOME=/tmp/demo perido start
 | `Unknown cycle 'name'.` | Run `perido config` to list valid cycle names. |
 | `Unknown key. Valid keys: ...` | Config keys are dotted presets like `focus.long` or `cycles.classic`. |
 | `--watch requires an interactive terminal.` | `--watch` needs a real TTY; run it directly in your shell. |
+| `ModuleNotFoundError: No module named 'perido'` | macOS iCloud Drive users: iCloud's File Provider sets the `UF_HIDDEN` flag on `.venv` files, causing Python to skip the editable install. Fix: `chflags -R nohidden .venv` then reinstall with `pip install -e .`. Or use `./setup.sh` which handles this automatically. |
 
 ## Project Structure
 
@@ -261,6 +277,8 @@ perido/
 ├── README.md                      # This file.
 ├── TODO.md                        # Planned work, priorities, and ideas
 │                                  # (see docs/maintain_todo.md).
+├── setup.sh                       # One-command install script (handles
+│                                  # macOS iCloud UF_HIDDEN fix).
 ├── docs/
 │   ├── code_review_guide.md       # Pre-release architectural audit checklist.
 │   ├── commenting_guidelines.md   # Docstring and inline comment conventions.

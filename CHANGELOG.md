@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-08-26
+
+### Added
+- `setup.sh` install script that handles the entire setup including an
+  automatic fix for a macOS iCloud Drive issue where the File Provider
+  daemon sets the `UF_HIDDEN` flag on `.venv` files, breaking the
+  editable install.
+
+### Fixed
+- `ModuleNotFoundError: No module named 'perido'` on macOS systems with
+  iCloud Drive Desktop & Documents sync enabled. The UF_HIDDEN flag on
+  `.venv` files causes Python's `site` module to skip `.pth` files,
+  preventing the editable finder from being registered.
+
 ## [1.4.0] - 2026-08-22
 
 ### Added
