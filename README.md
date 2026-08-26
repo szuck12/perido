@@ -49,37 +49,38 @@ phase already started.
 
 Requires Python 3.10+ (tested on 3.12). No third-party runtime dependencies.
 
-### Quick install (recommended)
-
-```bash
-git clone https://github.com/szuck12/perido.git perido
-cd perido
-./setup.sh                     # creates venv, installs, fixes macOS flags
-source .venv/bin/activate
-```
-
-The `setup.sh` script handles the entire setup and automatically fixes a
-macOS iCloud Drive issue that can break the install (see Troubleshooting
-below).
-
-### Manual install
+### Quick install
 
 ```bash
 git clone https://github.com/szuck12/perido.git perido
 cd perido
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -e .
+pip install .
 ```
 
 Verify:
 
 ```bash
-perido --version               # perido 1.4.0
+perido --version               # perido 1.4.1
 ```
 
 `requirements.txt` installs pytest for running the test suite; it is not
 needed to use the tool itself.
+
+### Development (editable install)
+
+If you plan to modify perido's source code, use an editable install so
+changes take effect immediately:
+
+```bash
+./setup.sh                     # handles macOS iCloud UF_HIDDEN fix
+source .venv/bin/activate
+```
+
+The `setup.sh` script creates a venv, runs `pip install -e .`, and
+automatically fixes a macOS iCloud Drive issue that can break editable
+installs (see Troubleshooting below).
 
 ## Command-Line Usage
 
@@ -266,7 +267,7 @@ PERIDO_HOME=/tmp/demo perido start
 | `Unknown cycle 'name'.` | Run `perido config` to list valid cycle names. |
 | `Unknown key. Valid keys: ...` | Config keys are dotted presets like `focus.long` or `cycles.classic`. |
 | `--watch requires an interactive terminal.` | `--watch` needs a real TTY; run it directly in your shell. |
-| `ModuleNotFoundError: No module named 'perido'` | macOS iCloud Drive users: iCloud's File Provider sets the `UF_HIDDEN` flag on `.venv` files, causing Python to skip the editable install. Fix: `chflags -R nohidden .venv` then reinstall with `pip install -e .`. Or use `./setup.sh` which handles this automatically. |
+| `ModuleNotFoundError: No module named 'perido'` | This only affects editable installs (`pip install -e .`) on macOS with iCloud Drive sync enabled. iCloud's File Provider sets the `UF_HIDDEN` flag on `.venv` files, causing Python to skip the editable finder. Fix: `chflags -R nohidden .venv` then reinstall with `pip install -e .`. Or use `./setup.sh` which handles this automatically. Alternatively, use a non-editable install (`pip install .`) which is not affected. |
 
 ## Project Structure
 
