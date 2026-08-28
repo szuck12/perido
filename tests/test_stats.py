@@ -182,3 +182,35 @@ def test_week_chart_renders_scaled_bars(home, clock, seed, capsys):
     # Printed oldest first: yesterday is the half-width bar, today peaks.
     assert lines[0].count("█") == 11
     assert lines[-1].count("█") == 22  # peak day fills the full width
+
+
+# ---------------------------------------------------------------------
+# Monthly chart data
+# ---------------------------------------------------------------------
+
+
+def test_month_bars_shape_and_scaling(home, clock, seed):
+    seed(actual_seconds=3600)  # today: peak
+    seed(days_ago=1, actual_seconds=1800)
+    seed(days_ago=29, actual_seconds=900)  # inside the window
+    seed(days_ago=31, actual_seconds=9999)  # outside the window
+
+    bars = stats.month_bars()
+    assert len(bars) == 30
+    assert bars[-1][0] == timer_now_local(clock).date()
+    assert bars[-1][1] == 3600
+    assert bars[-2][1] == 1800
+    assert bars[0][1] == 900  # 29 days ago: inside, ordered oldest first
+    assert bars[1][1] == 0.0  # 28 days ago: nothing seeded
+
+
+def test_month_bars_includes_interrupted_focus(home, clock, seed):
+    seed(status="interrupted", actual_seconds=600)
+    bars = stats.month_bars()
+    assert bars[-1][1] == 600
+
+
+def test_month_bars_excludes_skipped(home, clock, seed):
+    seed(status="skipped", actual_seconds=0)
+    bars = stats.month_bars()
+    assert bars[-1][1] == 0.0

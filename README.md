@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **1.4.1** — [Changelog](CHANGELOG.md)
+Current version: **1.5.0** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -35,7 +35,7 @@ background:
 
 1. **Write.** Starting a session, break, or cycle inserts one row into the
    SQLite database with its planned end time; the process then exits.
-2. **Finalise lazily.** Every command first checks for sessions whose end
+2. **Finalize lazily.** Every command first checks for sessions whose end
    time has passed and completes them: results are recorded, cycle phases
    advance starting from *now* (missed time is never backfilled), and
    finished cycles close with a summary.
@@ -152,6 +152,7 @@ at its boundary and the next phase starts when you return.
 | `perido history` | Recent sessions table (`--today`, `--week`, `--limit N`) |
 | `perido stats` | Your focus journey: today, this week, all time, behaviour |
 | `perido week` | Bar chart of focus minutes over the last 7 days |
+| `perido month` | Bar chart of focus minutes over the last 30 days |
 
 `stats` also prints up to two short insights — streaks, weekly completion
 rate, extension habits, peak focus hours, weakest weekday — once enough
@@ -193,6 +194,7 @@ perido cycle classic -w
 perido history --today
 perido stats
 perido week
+perido month
 
 # Tune defaults without editing any files
 perido config set focus.medium 30
@@ -301,7 +303,7 @@ perido/
 │   │                              # all-time, and behavioural.
 │   └── timer.py                   # Session lifecycle state machine: start,
 │                                  # pause, resume, extend, shorten, stop,
-│                                  # skip, and lazy finalisation of expired
+│                                  # skip, and lazy finalization of expired
 │                                  # sessions.
 ├── pyproject.toml                 # Packaging; version sourced dynamically
 │                                  # from perido.__version__.
@@ -314,7 +316,7 @@ perido/
     ├── test_config.py             # Defaults, persistence, key/value validation.
     ├── test_cycles.py             # Plans, automatic transitions, abandonment,
     │                              # and recovery.
-    ├── test_database.py           # Schema, queries, and finalisation
+    ├── test_database.py           # Schema, queries, and finalization
     │                              # primitives.
     ├── test_insights.py           # Trigger conditions for each insight rule.
     ├── test_stats.py              # Streaks, completion rates, hours, and

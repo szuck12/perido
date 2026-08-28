@@ -7,7 +7,7 @@ Every `.py` file starts with a brief comment describing the module's purpose.
 ```python
 # timer.py
 # Session lifecycle: start, pause/resume, extend/shorten, stop/skip,
-# and the lazy finalisation that turns expired rows into results.
+# and the lazy finalization that turns expired rows into results.
 ```
 
 ## 2. Google-Style Docstrings
@@ -82,7 +82,7 @@ code block.
 
 ```python
 # -------------------------------------------------------------------
-# Lazy finalisation
+# Lazy finalization
 # 1. Find active sessions whose end time has passed
 # 2. Mark them completed (or advance their cycle)
 # 3. Return the events so the CLI can render transitions
@@ -144,7 +144,7 @@ def finalize_expired() -> list[dict]:
     """Complete any sessions whose end time has passed.
 
     Note:
-        Paused sessions are never finalised here — resuming shifts
+        Paused sessions are never finalized here — resuming shifts
         their end time by the paused duration instead.
 
     Warning:

@@ -378,6 +378,42 @@ def test_week_chart(home, clock, seed, capsys):
     assert "1h 00m" in out and "30m" in out
 
 
+def test_month_chart(home, clock, seed, capsys):
+    seed(actual_seconds=3600)
+    seed(days_ago=1, actual_seconds=1800)
+    code = cli.main(["month"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "FOCUS — LAST 30 DAYS" in out
+    assert "█" * 42 in out  # peak day fills the full width
+    assert "1h 00m" in out and "30m" in out
+
+
+def test_month_chart_renders_30_rows(home, clock, seed, capsys):
+    for offset in (0, 1, 15, 29):
+        seed(days_ago=offset, actual_seconds=600)
+    cli.main(["month"])
+    out = capsys.readouterr().out
+    # A data row is a right-justified day-of-month followed by two
+    # spaces before the bar column.
+    rows = [
+        line for line in out.splitlines()
+        if len(line) >= 3 and line[:2].strip().isdigit()
+    ]
+    assert len(rows) == 30
+    filled = [line for line in rows if "█" in line]
+    assert len(filled) == 4  # exactly the four seeded days
+
+
+def test_month_chart_labels_day_of_month(home, clock, seed, capsys):
+    seed(actual_seconds=600)
+    cli.main(["month"])
+    out = capsys.readouterr().out
+    # Today's day-of-month appears as a row label.
+    today_num = str(timer.now().astimezone().date().day)
+    assert today_num in out
+
+
 def test_config_show(home, clock, capsys):
     code = cli.main(["config"])
     out = capsys.readouterr().out

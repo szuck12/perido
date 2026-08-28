@@ -99,13 +99,13 @@ same rules.
 - [ ] Day-boundary logic (streaks, "Today" filters) uses **local**
       dates, not UTC dates.
 
-### 2b. Lazy Finalisation
+### 2b. Lazy Finalization
 
 - [ ] Every public mutation (`start`, `stop`, `pause`, `resume`,
-      `extend`, `shorten`, `skip`, `break`, `cycle`) finalises expired
+      `extend`, `shorten`, `skip`, `break`, `cycle`) finalizes expired
       sessions first — no zombie active sessions can survive a command.
-- [ ] Paused sessions are never auto-completed by finalisation.
-- [ ] Finalisation returns an ordered event list; the CLI renders
+- [ ] Paused sessions are never auto-completed by finalization.
+- [ ] Finalization returns an ordered event list; the CLI renders
       events before rendering current state.
 
 ### 2c. Cycle Advancement
@@ -145,7 +145,7 @@ Against the suite in `tests/` (fake clock + isolated `PERIDO_HOME`).
 | Invalid config keys/values rejected | `test_config.py` | |
 | Schema creation and row helpers | `test_database.py` | |
 | Start/stop/pause/resume/extend/shorten/skip lifecycle | `test_timer.py` | |
-| Expired-session finalisation (incl. paused) | `test_timer.py` | |
+| Expired-session finalization (incl. paused) | `test_timer.py` | |
 | Cycle advance, completion, abandonment | `test_cycles.py` | |
 | Cycle stall-and-resync across boundaries | `test_cycles.py` | |
 | Every command's happy path via `cli.main` | `test_cli.py` | |
@@ -385,7 +385,7 @@ design drift.
   and thirteen command handlers. Would splitting rendering helpers
   into a `render.py` reduce cognitive load without fragmenting the
   read-modify-render flow?
-- Is the lazy-finalisation contract ("every mutation finalises
+- Is the lazy-finalization contract ("every mutation finalizes
   first") documented in one place and enforced by tests, or spread
   as folklore?
 

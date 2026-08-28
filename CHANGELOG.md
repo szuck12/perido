@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-28
+
+### Added
+- `month` command with a bar chart of focus minutes over the last 30
+  days, grouped by month.
+
 ## [1.4.1] - 2026-08-26
 
 ### Added
@@ -92,7 +98,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Passive Pomodoro timer with no daemon: every command reads state from a
-  local SQLite database and lazily finalises sessions whose end time has
+  local SQLite database and lazily finalizes sessions whose end time has
   passed, so the timer survives crashes and reboots.
 - Focus sessions and breaks with four configurable presets (short, medium,
   long, extralong) plus exact `--duration` overrides; pause/resume,

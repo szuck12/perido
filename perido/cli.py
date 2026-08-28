@@ -473,6 +473,26 @@ def cmd_week(args) -> int:
     return 0
 
 
+def cmd_month(args) -> int:
+    days = stats.month_bars()
+    peak = max((seconds for _, seconds in days), default=0.0)
+    width = 42
+    print(color("FOCUS — LAST 30 DAYS", "1"))
+    print()
+    longest_value = max(len(fmt_minutes(seconds)) for _, seconds in days)
+    previous = None
+    for day, seconds in days:
+        if previous is not None and day.month != previous.month:
+            print(f"— {day.strftime('%b %Y')} —")
+        previous = day
+        blocks = ""
+        if peak > 0 and seconds > 0:
+            blocks = "█" * max(1, round(seconds / peak * width))
+        value = fmt_minutes(seconds).rjust(longest_value)
+        print(f"{day.day:>2}  {blocks.ljust(width)}  {value}")
+    return 0
+
+
 def cmd_config(args) -> int:
     parts = args.args
     if not parts:
@@ -635,6 +655,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("week", help="bar chart of the last 7 days")
     p.set_defaults(func=cmd_week)
+
+    p = sub.add_parser("month", help="bar chart of the last 30 days")
+    p.set_defaults(func=cmd_month)
 
     p = sub.add_parser("config", help="show or change configuration")
     p.add_argument(

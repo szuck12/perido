@@ -245,8 +245,16 @@ def collect() -> dict[str, list[tuple[str, str]]]:
     }
 
 
-def week_bars() -> list[tuple[date, float]]:
-    """Focus seconds per local day for the last 7 days, oldest first."""
+def _daily_bars(window_days: int) -> list[tuple[date, float]]:
+    """Focus seconds per local day for a trailing window, oldest first.
+
+    Args:
+        window_days: Number of days to span, ending today.
+
+    Returns:
+        (local_date, focus_seconds) pairs, oldest first, with zero for
+        days that have no focus time.
+    """
     _, _, rows, _ = _load()
     focused = [r for r in rows if r["status"] != "skipped"]
     today = timer.now().astimezone().date()
@@ -257,6 +265,17 @@ def week_bars() -> list[tuple[date, float]]:
     return [
         (day, totals.get(day, 0.0))
         for day in (
-            today - timedelta(days=offset) for offset in range(6, -1, -1)
+            today - timedelta(days=offset)
+            for offset in range(window_days - 1, -1, -1)
         )
     ]
+
+
+def week_bars() -> list[tuple[date, float]]:
+    """Focus seconds per local day for the last 7 days, oldest first."""
+    return _daily_bars(7)
+
+
+def month_bars() -> list[tuple[date, float]]:
+    """Focus seconds per local day for the last 30 days, oldest first."""
+    return _daily_bars(30)
