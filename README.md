@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **1.5.0** — [Changelog](CHANGELOG.md)
+Current version: **1.4.1** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape

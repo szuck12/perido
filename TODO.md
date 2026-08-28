@@ -28,7 +28,7 @@
 - [x] 2026-08-22 — Security audit section added to the code review guide;
       numeric inputs now validate finiteness across argv and config
       parsing (#docs, #config, #cli, #bug)
-- [x] 2026-08-28 — `month` command with a bar chart of focus minutes over
+- [x] 2026-08-26 — `month` command with a bar chart of focus minutes over
       the last 30 days, grouped by month (#stats, #cli, #test)
 
 ## High Priority
