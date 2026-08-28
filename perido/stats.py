@@ -20,7 +20,14 @@ WEEKDAYS = (
 
 
 def format_hour(hour: int) -> str:
-    """Format an hour-of-day like 8 PM or 12 AM."""
+    """Format an hour-of-day like 8 PM or 12 AM.
+
+    Args:
+        hour: The 0-23 hour-of-day value.
+
+    Returns:
+        A human-readable local label.
+    """
     suffix = "AM" if hour < 12 else "PM"
     twelve = hour % 12 or 12
     return f"{twelve} {suffix}"
@@ -50,7 +57,16 @@ def _rate(completed: int, interrupted: int) -> str:
 
 
 def current_streak(dates: set[date], today: date) -> int:
-    """Consecutive active days ending today or yesterday."""
+    """Consecutive active days ending today or yesterday.
+
+    Args:
+        dates: The set of local dates with finished sessions.
+        today: The current local date.
+
+    Returns:
+        The number of consecutive active days, capped by the grace
+        day that a still-running today provides.
+    """
     day = today if today in dates else today - timedelta(days=1)
     streak = 0
     while day in dates:
@@ -60,7 +76,14 @@ def current_streak(dates: set[date], today: date) -> int:
 
 
 def best_streak(dates: set[date]) -> int:
-    """Longest run of consecutive active days ever recorded."""
+    """Longest run of consecutive active days ever recorded.
+
+    Args:
+        dates: The set of local dates with finished sessions.
+
+    Returns:
+        The length of the longest uninterrupted active run.
+    """
     best = 0
     for day in dates:
         if day - timedelta(days=1) in dates:
@@ -124,7 +147,9 @@ def collect() -> dict[str, list[tuple[str, str]]]:
     best_day = max(by_day, key=by_day.get) if by_day else None
 
     active_dates = {_local_date(r) for r in completed}
-    longest = max((r["actual_seconds"] or 0) for r in completed) if completed else 0.0
+    longest = (
+        max((r["actual_seconds"] or 0) for r in completed) if completed else 0.0
+    )
     avg_session = (
         sum(r["actual_seconds"] or 0 for r in completed) / len(completed)
         if completed
@@ -135,7 +160,9 @@ def collect() -> dict[str, list[tuple[str, str]]]:
     weekday_totals: dict[str, float] = {}
     for row in focused:
         hour = _local_hour(row)
-        hour_totals[hour] = hour_totals.get(hour, 0.0) + (row["actual_seconds"] or 0)
+        hour_totals[hour] = hour_totals.get(hour, 0.0) + (
+            row["actual_seconds"] or 0
+        )
         name = WEEKDAYS[_local_date(row).weekday()]
         weekday_totals[name] = weekday_totals.get(name, 0.0) + (
             row["actual_seconds"] or 0
@@ -148,7 +175,9 @@ def collect() -> dict[str, list[tuple[str, str]]]:
         else None
     )
     today_longest = (
-        max((r["actual_seconds"] or 0) for r in today_done) if today_done else None
+        max((r["actual_seconds"] or 0) for r in today_done)
+        if today_done
+        else None
     )
 
     return {
@@ -156,7 +185,10 @@ def collect() -> dict[str, list[tuple[str, str]]]:
             ("Sessions", str(len(today_done))),
             ("Focus time", fmt_minutes(_focus_seconds(today_focused))),
             ("Average session", fmt_minutes(today_avg) if today_avg else "—"),
-            ("Longest session", fmt_minutes(today_longest) if today_longest else "—"),
+            (
+                "Longest session",
+                fmt_minutes(today_longest) if today_longest else "—",
+            ),
             ("Interrupted", str(len(today_interrupted))),
             ("Completion rate", _rate(len(today_done), len(today_interrupted))),
         ],
@@ -198,7 +230,9 @@ def collect() -> dict[str, list[tuple[str, str]]]:
             ),
             (
                 "Typical session",
-                fmt_minutes(median([r["actual_seconds"] or 0 for r in completed]))
+                fmt_minutes(
+                    median([r["actual_seconds"] or 0 for r in completed])
+                )
                 if completed
                 else "—",
             ),
@@ -222,5 +256,7 @@ def week_bars() -> list[tuple[date, float]]:
         totals[day] = totals.get(day, 0.0) + (row["actual_seconds"] or 0)
     return [
         (day, totals.get(day, 0.0))
-        for day in (today - timedelta(days=offset) for offset in range(6, -1, -1))
+        for day in (
+            today - timedelta(days=offset) for offset in range(6, -1, -1)
+        )
     ]

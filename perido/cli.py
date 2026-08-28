@@ -6,9 +6,10 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import sqlite3
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from . import PeridoError, __version__, cycles, database, insights, stats, timer
 from .config import (
@@ -78,14 +79,14 @@ def _local(moment: datetime) -> datetime:
     return moment.astimezone()
 
 
-def _day_label(date) -> str:
+def _day_label(day: date) -> str:
     """Human label for a local date: Today, Yesterday, or Aug 12."""
     today = _local(timer.now()).date()
-    if date == today:
+    if day == today:
         return "Today"
-    if date == today - timedelta(days=1):
+    if day == today - timedelta(days=1):
         return "Yesterday"
-    return f"{date.strftime('%b')} {date.day}"
+    return f"{day.strftime('%b')} {day.day}"
 
 
 def _trim(value: float) -> str:
@@ -166,7 +167,9 @@ def render_status() -> str:
         if not session:
             return _idle_block(conn)
         paused = bool(session["paused_at"])
-        title = "🍅 FOCUSING" if session["kind"] == "focus" else "☕ ON BREAK"
+        title = (
+            "🍅 FOCUSING" if session["kind"] == "focus" else "☕ ON BREAK"
+        )
         cycle = database.get_cycle(conn, session["cycle_id"])
         lines = [color(title, "1")]
         steps = None
@@ -203,7 +206,7 @@ def _step_label(step: dict) -> str:
     return f"Focus {step['slot']} of {step['total']}"
 
 
-def _idle_block(conn) -> str:
+def _idle_block(conn: sqlite3.Connection) -> str:
     """Status body shown when nothing is running."""
     last = database.last_finished_session(conn)
     if not last:
@@ -342,7 +345,9 @@ def cmd_status(args) -> int:
 
 def cmd_break(args) -> int:
     # Unlike focus sessions (medium default), breaks default to short.
-    minutes = resolve_duration("break", _chosen_preset(args) or "short", args.duration)
+    minutes = resolve_duration(
+        "break", _chosen_preset(args) or "short", args.duration
+    )
     timer.start(minutes, kind="break")
     print("☕ Break started")
     print()
@@ -405,7 +410,9 @@ def cmd_history(args) -> int:
     return 0
 
 
-def _history_row(conn, row: dict) -> tuple[str, str, str, str]:
+def _history_row(
+    conn: sqlite3.Connection, row: dict
+) -> tuple[str, str, str, str]:
     """Build one printable history table row."""
     started = _local(database.parse_ts(row["start_time"]))
     if row["status"] == "completed":
@@ -457,12 +464,12 @@ def cmd_week(args) -> int:
     print(color("FOCUS — LAST 7 DAYS", "1"))
     print()
     longest_value = max(len(fmt_minutes(seconds)) for _, seconds in days)
-    for date, seconds in days:
+    for day, seconds in days:
         blocks = ""
         if peak > 0 and seconds > 0:
             blocks = "█" * max(1, round(seconds / peak * width))
         value = fmt_minutes(seconds).rjust(longest_value)
-        print(f"{date.strftime('%a')}  {blocks.ljust(width)}  {value}")
+        print(f"{day.strftime('%a')}  {blocks.ljust(width)}  {value}")
     return 0
 
 
@@ -556,7 +563,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--version", action="version", version=f"perido {__version__}"
     )
-    sub = parser.add_subparsers(dest="command", metavar="command", required=True)
+    sub = parser.add_subparsers(
+        dest="command", metavar="command", required=True
+    )
 
     p = sub.add_parser("start", help="start a focus session")
     _add_duration_flags(p)
@@ -585,7 +594,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_skip)
 
     p = sub.add_parser("status", help="show the current session")
-    p.add_argument("-w", "--watch", action="store_true", help="live updating view")
+    p.add_argument(
+        "-w", "--watch", action="store_true", help="live updating view"
+    )
     p.set_defaults(func=cmd_status)
 
     p = sub.add_parser("break", help="take a break")
@@ -593,7 +604,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_break)
 
     p = sub.add_parser("cycle", help="start a multi-session Pomodoro cycle")
-    p.add_argument("name", metavar="NAME", help="cycle name (see `perido config`)")
+    p.add_argument(
+        "name", metavar="NAME", help="cycle name (see `perido config`)"
+    )
     p.add_argument(
         "-w",
         "--watch",
@@ -604,10 +617,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("history", help="show recent sessions")
     group = p.add_mutually_exclusive_group()
-    group.add_argument("--today", action="store_true", help="only today's sessions")
+    group.add_argument(
+        "--today", action="store_true", help="only today's sessions"
+    )
     group.add_argument("--week", action="store_true", help="the last 7 days")
     p.add_argument(
-        "--limit", type=int, default=20, metavar="N", help="maximum rows to show"
+        "--limit",
+        type=int,
+        default=20,
+        metavar="N",
+        help="maximum rows to show",
     )
     p.set_defaults(func=cmd_history)
 

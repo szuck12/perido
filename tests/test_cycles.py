@@ -62,7 +62,8 @@ def cycle_row(cycle_id):
 )
 def test_preset_plans(home, clock, name, focus_minutes, breaks):
     steps = cycles.plan_for(name)
-    assert [s["minutes"] for s in steps if s["kind"] == "focus"] == focus_minutes
+    focus_minutes_values = [s["minutes"] for s in steps if s["kind"] == "focus"]
+    assert focus_minutes_values == focus_minutes
     assert [s["minutes"] for s in steps if s["kind"] == "break"] == breaks
 
 

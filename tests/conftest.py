@@ -11,7 +11,11 @@ from perido import database, timer
 
 
 class FakeClock:
-    """Callable replacement for perido.timer.now with manual control."""
+    """Callable replacement for perido.timer.now with manual control.
+
+    Attributes:
+        _t: Current simulated UTC datetime.
+    """
 
     def __init__(self, start: datetime) -> None:
         self._t = start

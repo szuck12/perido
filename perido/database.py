@@ -51,10 +51,14 @@ def data_dir() -> Path:
     elif sys.platform == "darwin":
         path = Path.home() / "Library" / "Application Support" / "perido"
     elif sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        base = Path(
+            os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")
+        )
         path = base / "perido"
     else:
-        base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+        base = Path(
+            os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")
+        )
         path = base / "perido"
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -74,12 +78,26 @@ def connect() -> sqlite3.Connection:
 
 
 def iso(dt: datetime) -> str:
-    """Format an aware datetime as an ISO-8601 UTC string."""
+    """Format an aware datetime as an ISO-8601 UTC string.
+
+    Args:
+        dt: The aware datetime to store.
+
+    Returns:
+        A string suitable for the timestamp columns.
+    """
     return dt.isoformat()
 
 
 def parse_ts(value: str) -> datetime:
-    """Parse a stored ISO-8601 timestamp back into a datetime."""
+    """Parse a stored ISO-8601 timestamp back into a datetime.
+
+    Args:
+        value: A timestamp produced by `iso`.
+
+    Returns:
+        The parsed aware datetime.
+    """
     return datetime.fromisoformat(value)
 
 
@@ -99,6 +117,18 @@ def create_session(
     cycle_position: int | None = None,
 ) -> dict[str, Any]:
     """Insert a new active session and return it.
+
+    Args:
+        conn: An open database connection.
+        kind: "focus" or "break".
+        minutes: Planned length in minutes.
+        start: The session's start instant.
+        cycle_id: Id of the owning cycle, if a cycle phase.
+        cycle_name: Snapshot of the cycle's name, if a cycle phase.
+        cycle_position: Index of this step in the cycle plan.
+
+    Returns:
+        The inserted session row.
 
     Note:
         `end_time` holds the scheduled end while the session is active.
@@ -124,14 +154,34 @@ def create_session(
     return get_session(conn, cur.lastrowid)  # type: ignore[return-value]
 
 
-def get_session(conn: sqlite3.Connection, session_id: int) -> dict[str, Any] | None:
-    """Return one session by id, or None."""
-    row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
+def get_session(
+    conn: sqlite3.Connection, session_id: int
+) -> dict[str, Any] | None:
+    """Return one session by id, or None.
+
+    Args:
+        conn: An open database connection.
+        session_id: The session's row id.
+
+    Returns:
+        The session dict, or None if it does not exist.
+    """
+    row = (
+        conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,))
+        .fetchone()
+    )
     return dict(row) if row else None
 
 
 def get_active_session(conn: sqlite3.Connection) -> dict[str, Any] | None:
-    """Return the most recent active session, or None."""
+    """Return the most recent active session, or None.
+
+    Args:
+        conn: An open database connection.
+
+    Returns:
+        The newest active session dict, or None.
+    """
     row = conn.execute(
         "SELECT * FROM sessions WHERE status = 'active'"
         " ORDER BY id DESC LIMIT 1"
@@ -140,7 +190,14 @@ def get_active_session(conn: sqlite3.Connection) -> dict[str, Any] | None:
 
 
 def last_finished_session(conn: sqlite3.Connection) -> dict[str, Any] | None:
-    """Return the most recently created non-active session, or None."""
+    """Return the most recently created non-active session, or None.
+
+    Args:
+        conn: An open database connection.
+
+    Returns:
+        The newest finished session dict, or None.
+    """
     row = conn.execute(
         "SELECT * FROM sessions WHERE status != 'active'"
         " ORDER BY id DESC LIMIT 1"
@@ -148,8 +205,16 @@ def last_finished_session(conn: sqlite3.Connection) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
-def update_session(conn: sqlite3.Connection, session_id: int, **fields: Any) -> None:
-    """Set columns on a session and commit."""
+def update_session(
+    conn: sqlite3.Connection, session_id: int, **fields: Any
+) -> None:
+    """Set columns on a session and commit.
+
+    Args:
+        conn: An open database connection.
+        session_id: The session's row id.
+        fields: Column names and values to update.
+    """
     assignments = ", ".join(f"{key} = ?" for key in fields)
     conn.execute(
         f"UPDATE sessions SET {assignments} WHERE id = ?",  # noqa: S608
@@ -196,7 +261,9 @@ def query_sessions(
         clauses.append(f"status IN ({', '.join('?' * len(statuses))})")
         params.extend(statuses)
     where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
-    sql = f"SELECT * FROM sessions{where} ORDER BY start_time {order}"  # noqa: S608
+    sql = (  # noqa: S608
+        f"SELECT * FROM sessions{where} ORDER BY start_time {order}"
+    )
     if limit is not None:
         sql += f" LIMIT {int(limit)}"
     rows = conn.execute(sql, params).fetchall()
@@ -215,7 +282,18 @@ def create_cycle(
     position: int,
     created_at: datetime,
 ) -> str:
-    """Insert a new active cycle and return its generated id."""
+    """Insert a new active cycle and return its generated id.
+
+    Args:
+        conn: An open database connection.
+        name: The cycle's preset name.
+        plan: The alternating focus/break step list.
+        position: The index of the currently running phase.
+        created_at: When the cycle started.
+
+    Returns:
+        The generated cycle id.
+    """
     cycle_id = uuid.uuid4().hex
     conn.execute(
         "INSERT INTO cycles (id, name, plan, position, status, created_at)"
@@ -226,16 +304,37 @@ def create_cycle(
     return cycle_id
 
 
-def get_cycle(conn: sqlite3.Connection, cycle_id: str | None) -> dict[str, Any] | None:
-    """Return one cycle by id, or None."""
+def get_cycle(
+    conn: sqlite3.Connection, cycle_id: str | None
+) -> dict[str, Any] | None:
+    """Return one cycle by id, or None.
+
+    Args:
+        conn: An open database connection.
+        cycle_id: The cycle's id, possibly None.
+
+    Returns:
+        The cycle dict, or None if the id is missing or unknown.
+    """
     if cycle_id is None:
         return None
-    row = conn.execute("SELECT * FROM cycles WHERE id = ?", (cycle_id,)).fetchone()
+    row = (
+        conn.execute("SELECT * FROM cycles WHERE id = ?", (cycle_id,))
+        .fetchone()
+    )
     return dict(row) if row else None
 
 
-def update_cycle(conn: sqlite3.Connection, cycle_id: str, **fields: Any) -> None:
-    """Set columns on a cycle and commit."""
+def update_cycle(
+    conn: sqlite3.Connection, cycle_id: str, **fields: Any
+) -> None:
+    """Set columns on a cycle and commit.
+
+    Args:
+        conn: An open database connection.
+        cycle_id: The cycle's id.
+        fields: Column names and values to update.
+    """
     assignments = ", ".join(f"{key} = ?" for key in fields)
     conn.execute(
         f"UPDATE cycles SET {assignments} WHERE id = ?",  # noqa: S608
@@ -245,7 +344,15 @@ def update_cycle(conn: sqlite3.Connection, cycle_id: str, **fields: Any) -> None
 
 
 def count_cycles(conn: sqlite3.Connection, status: str) -> int:
-    """Count cycles with the given status."""
+    """Count cycles with the given status.
+
+    Args:
+        conn: An open database connection.
+        status: The cycle status to count.
+
+    Returns:
+        The number of matching cycles.
+    """
     row = conn.execute(
         "SELECT COUNT(*) AS n FROM cycles WHERE status = ?", (status,)
     ).fetchone()
@@ -253,10 +360,24 @@ def count_cycles(conn: sqlite3.Connection, status: str) -> int:
 
 
 def json_dumps(value: Any) -> str:
-    """Serialize plan structures to compact JSON text."""
+    """Serialize plan structures to compact JSON text.
+
+    Args:
+        value: The structure to serialize.
+
+    Returns:
+        A compact JSON string.
+    """
     return json.dumps(value, separators=(",", ":"))
 
 
 def json_loads(value: str) -> Any:
-    """Deserialize stored JSON text."""
+    """Deserialize stored JSON text.
+
+    Args:
+        value: A JSON string, usually from the `plan` column.
+
+    Returns:
+        The deserialized Python structure.
+    """
     return json.loads(value)

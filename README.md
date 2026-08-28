@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **1.4.0** — [Changelog](CHANGELOG.md)
+Current version: **1.4.1** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -203,7 +203,7 @@ perido config set cycles.sprint 15,3,15
 
 ### Durations
 
-Six presets are available for both focus and breaks. Adjust any of them:
+Five presets are available for both focus and breaks. Adjust any of them:
 
 ```bash
 perido config set focus.medium 30     # default focus becomes 30 min

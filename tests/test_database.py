@@ -36,15 +36,20 @@ def test_session_roundtrip(home, clock):
     assert fetched["kind"] == "focus"
     assert fetched["planned_minutes"] == 25
     # end_time is scheduled start + planned minutes.
-    assert database.parse_ts(fetched["end_time"]) - clock() == timedelta(minutes=25)
+    end_delta = database.parse_ts(fetched["end_time"]) - clock()
+    assert end_delta == timedelta(minutes=25)
     conn.close()
 
 
 def test_get_active_session_returns_latest(home, clock):
     conn = database.connect()
-    first = database.create_session(conn, kind="focus", minutes=25, start=clock())
+    first = database.create_session(
+        conn, kind="focus", minutes=25, start=clock()
+    )
     database.update_session(conn, first["id"], status="completed")
-    second = database.create_session(conn, kind="break", minutes=5, start=clock())
+    second = database.create_session(
+        conn, kind="break", minutes=5, start=clock()
+    )
     active = database.get_active_session(conn)
     assert active["id"] == second["id"]
     conn.close()
@@ -52,7 +57,9 @@ def test_get_active_session_returns_latest(home, clock):
 
 def test_get_active_session_none_when_all_finished(home, clock):
     conn = database.connect()
-    session = database.create_session(conn, kind="focus", minutes=25, start=clock())
+    session = database.create_session(
+        conn, kind="focus", minutes=25, start=clock()
+    )
     database.update_session(conn, session["id"], status="skipped")
     assert database.get_active_session(conn) is None
     conn.close()
@@ -61,7 +68,9 @@ def test_get_active_session_none_when_all_finished(home, clock):
 def test_last_finished_session(home, clock):
     conn = database.connect()
     assert database.last_finished_session(conn) is None
-    session = database.create_session(conn, kind="focus", minutes=25, start=clock())
+    session = database.create_session(
+        conn, kind="focus", minutes=25, start=clock()
+    )
     database.update_session(conn, session["id"], status="interrupted")
     last = database.last_finished_session(conn)
     assert last["id"] == session["id"]
@@ -70,10 +79,14 @@ def test_last_finished_session(home, clock):
 
 def test_query_sessions_filters(home, clock):
     conn = database.connect()
-    early = database.create_session(conn, kind="focus", minutes=25, start=clock())
+    early = database.create_session(
+        conn, kind="focus", minutes=25, start=clock()
+    )
     database.update_session(conn, early["id"], status="completed")
     clock.advance(days=2)
-    late_break = database.create_session(conn, kind="break", minutes=5, start=clock())
+    late_break = database.create_session(
+        conn, kind="break", minutes=5, start=clock()
+    )
     database.update_session(conn, late_break["id"], status="completed")
 
     everything = database.query_sessions(conn)
@@ -90,7 +103,9 @@ def test_query_sessions_filters(home, clock):
     asc = database.query_sessions(conn, order="ASC", limit=1)
     assert asc[0]["id"] == early["id"]
 
-    until_filter = database.query_sessions(conn, until=clock() - timedelta(days=1))
+    until_filter = database.query_sessions(
+        conn, until=clock() - timedelta(days=1)
+    )
     assert [s["id"] for s in until_filter] == [early["id"]]
 
     by_status = database.query_sessions(conn, statuses=("active",))

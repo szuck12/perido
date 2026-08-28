@@ -128,7 +128,9 @@ def test_long_pause_shifts_end_time(home, clock):
     timer.pause()
     clock.advance(hours=2)
     resumed = timer.resume()
-    shifted = database.parse_ts(resumed["end_time"]) - database.parse_ts(original_end)
+    shifted = database.parse_ts(resumed["end_time"]) - database.parse_ts(
+        original_end
+    )
     assert shifted == timedelta(hours=2)
 
 
@@ -163,7 +165,9 @@ def test_extend_requires_positive(home, clock):
 
 
 def test_extend_without_session(home, clock):
-    with pytest.raises(PeridoError, match="No active Pomodoro session to extend"):
+    with pytest.raises(
+        PeridoError, match="No active Pomodoro session to extend"
+    ):
         timer.extend(10)
 
 
@@ -234,7 +238,9 @@ def test_shorten_requires_positive(home, clock):
 
 
 def test_shorten_without_session(home, clock):
-    with pytest.raises(PeridoError, match="No active Pomodoro session to shorten"):
+    with pytest.raises(
+        PeridoError, match="No active Pomodoro session to shorten"
+    ):
         timer.shorten(10)
 
 
@@ -258,7 +264,8 @@ def test_stop_records_interrupted_with_progress(home, clock):
     stopped = timer.stop()
     assert stopped["status"] == "interrupted"
     assert stopped["actual_seconds"] == pytest.approx(18 * 60 + 42)
-    assert timer.progress_fraction(stopped) == pytest.approx((18 * 60 + 42) / (25 * 60))
+    fraction = timer.progress_fraction(stopped)
+    assert fraction == pytest.approx((18 * 60 + 42) / (25 * 60))
     assert timer.active_session() is None
 
 

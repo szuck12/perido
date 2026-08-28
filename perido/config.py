@@ -13,8 +13,20 @@ from . import PeridoError, database
 PRESETS = ("extrashort", "short", "medium", "long", "extralong")
 
 DEFAULTS: dict[str, Any] = {
-    "focus": {"extrashort": 10, "short": 15, "medium": 25, "long": 50, "extralong": 90},
-    "break": {"extrashort": 3, "short": 5, "medium": 10, "long": 15, "extralong": 30},
+    "focus": {
+        "extrashort": 10,
+        "short": 15,
+        "medium": 25,
+        "long": 50,
+        "extralong": 90,
+    },
+    "break": {
+        "extrashort": 3,
+        "short": 5,
+        "medium": 10,
+        "long": 15,
+        "extralong": 30,
+    },
     "cycles": {
         # Alternating focus/break minutes, always starting with focus.
         # Each preset name describes its plan's shape.
@@ -122,6 +134,9 @@ def load() -> dict[str, Any]:
 def save(cfg: dict[str, Any]) -> None:
     """Write configuration back to disk as readable JSON.
 
+    Args:
+        cfg: The configuration dict to persist.
+
     Note:
         Cycle plans are stored as plain alternating minute lists
         (e.g. [25, 5, 25, 5]) regardless of their in-memory shape, so
@@ -195,9 +210,13 @@ def set_value(key: str, raw: str) -> str:
 def _key_help() -> str:
     """Build the list of valid configuration keys for error messages."""
     duration_keys = ", ".join(
-        f"{section}.{preset}" for section in ("focus", "break") for preset in PRESETS
+        f"{section}.{preset}"
+        for section in ("focus", "break")
+        for preset in PRESETS
     )
-    cycle_keys = ", ".join(f"cycles.{name}" for name in sorted(DEFAULTS["cycles"]))
+    cycle_keys = ", ".join(
+        f"cycles.{name}" for name in sorted(DEFAULTS["cycles"])
+    )
     return f"Unknown key. Valid keys:\n  {duration_keys}\n  {cycle_keys}"
 
 

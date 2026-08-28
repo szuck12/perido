@@ -5,12 +5,6 @@
 
 ## Done
 
-- [x] 2026-08-20 — Initial release: passive timer core, cycles, history,
-      stats, insights, and config (#timer, #cycles, #stats, #insights, #cli)
-- [x] 2026-08-20 — SQLite persistence layer with lazy finalisation and
-      crash-safe state (#timer, #infra)
-- [x] 2026-08-20 — Fake-clock test harness with isolated data directory
-      (#test, #infra)
 - [x] 2026-08-22 — Renamed the project from cli-pomodoro to Perido:
       package, command, data directory, database file, and env override
       (#infra, #docs)

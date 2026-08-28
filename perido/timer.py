@@ -56,17 +56,36 @@ def active_session() -> dict[str, Any] | None:
         conn.close()
 
 
-def remaining_seconds(session: dict[str, Any], at: datetime | None = None) -> float:
-    """Seconds left on a session's scheduled window (never negative)."""
+def remaining_seconds(
+    session: dict[str, Any], at: datetime | None = None
+) -> float:
+    """Seconds left on a session's scheduled window (never negative).
+
+    Args:
+        session: The active or stored session row.
+        at: Instant to measure from; defaults to the current clock.
+
+    Returns:
+        Remaining scheduled seconds, floored at zero.
+    """
     moment = at or now()
     end = _parse(session["end_time"])
     return max(0.0, (end - moment).total_seconds())
 
 
-def focused_seconds(session: dict[str, Any], at: datetime | None = None) -> float:
+def focused_seconds(
+    session: dict[str, Any], at: datetime | None = None
+) -> float:
     """Focus seconds accumulated so far, excluding paused time.
 
     While paused, time is only counted up to the pause instant.
+
+    Args:
+        session: The active or stored session row.
+        at: Instant to measure from; defaults to the current clock.
+
+    Returns:
+        Accumulated focus seconds, never negative.
     """
     moment = at or now()
     if session["paused_at"]:
@@ -78,12 +97,30 @@ def focused_seconds(session: dict[str, Any], at: datetime | None = None) -> floa
 
 
 def planned_seconds(session: dict[str, Any]) -> float:
-    """Total planned seconds including any extensions."""
+    """Total planned seconds including any extensions.
+
+    Args:
+        session: The session row to measure.
+
+    Returns:
+        Planned window length in seconds.
+    """
     return (session["planned_minutes"] + session["extension_minutes"]) * 60
 
 
-def progress_fraction(session: dict[str, Any], at: datetime | None = None) -> float:
-    """Focused seconds as a fraction of the planned total, capped at 1."""
+def progress_fraction(
+    session: dict[str, Any], at: datetime | None = None
+) -> float:
+    """Focused seconds as a fraction of the planned total, capped at 1.
+
+    Args:
+        session: The active or stored session row.
+        at: Instant to measure from; defaults to the current clock.
+
+    Returns:
+        A fraction in [0, 1] describing how far through the session
+        the user is.
+    """
     planned = planned_seconds(session)
     if planned <= 0:
         return 0.0
@@ -106,6 +143,16 @@ def start(
 
     Any expired-but-unfinalized session is completed first, so a stale
     session never blocks a fresh start.
+
+    Args:
+        minutes: Planned length in minutes; must be positive.
+        kind: Either "focus" or "break".
+        cycle_id: Id of the owning cycle, if this is a cycle phase.
+        cycle_name: Snapshot of the cycle's name, if a cycle phase.
+        cycle_position: Index of this step in the cycle plan.
+
+    Returns:
+        The newly created active session row.
 
     Raises:
         PeridoError: If another live session is already active.
@@ -179,6 +226,12 @@ def resume() -> dict[str, Any]:
 def extend(minutes: float) -> dict[str, Any]:
     """Extend the active session by a positive number of minutes.
 
+    Args:
+        minutes: Number of minutes to push the end time later.
+
+    Returns:
+        The updated active session row.
+
     Raises:
         PeridoError: If nothing is active or minutes is not positive.
     """
@@ -212,6 +265,12 @@ def shorten(minutes: float) -> dict[str, Any]:
     The trim is recorded as negative extension time, so every derived
     total (planned + extension) stays consistent across history and
     statistics without schema changes.
+
+    Args:
+        minutes: Number of minutes to pull the end time earlier.
+
+    Returns:
+        The updated active session row.
 
     Raises:
         PeridoError: If nothing is active, minutes is not positive, or

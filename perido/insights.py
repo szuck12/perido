@@ -7,7 +7,6 @@ from collections import defaultdict
 from datetime import timedelta
 
 from . import database, stats, timer
-from .config import load as load_config
 
 MIN_SESSIONS = 10
 MAX_INSIGHTS = 2
@@ -140,7 +139,11 @@ def _weak_day_rule(rows: list[dict], now_local) -> str | None:
         counts[name] += 1
     if len(totals) < 4:
         return None
-    candidates = {name: total for name, total in totals.items() if counts[name] >= 3}
+    candidates = {
+        name: total
+        for name, total in totals.items()
+        if counts[name] >= 3
+    }
     if not candidates:
         return None
     weakest = min(candidates, key=candidates.get)

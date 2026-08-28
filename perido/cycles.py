@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+import sqlite3
 from typing import Any
 
 from . import PeridoError, database, timer
@@ -17,6 +17,12 @@ def available_names() -> list[str]:
 
 def plan_for(name: str) -> list[dict[str, Any]]:
     """Return the step list for a cycle name.
+
+    Args:
+        name: The cycle's name.
+
+    Returns:
+        The parsed step list for that cycle.
 
     Raises:
         PeridoError: If the name is not configured.
@@ -32,6 +38,9 @@ def plan_for(name: str) -> list[dict[str, Any]]:
 
 def start(name: str) -> dict[str, Any]:
     """Start a named cycle and its first focus session.
+
+    Args:
+        name: The cycle's preset name.
 
     Returns:
         Dict with "cycle" and "session" keys.
@@ -66,13 +75,19 @@ def start(name: str) -> dict[str, Any]:
         conn.close()
 
 
-def advance(conn, cycle_id: str) -> dict[str, Any] | None:
+def advance(
+    conn: sqlite3.Connection, cycle_id: str
+) -> dict[str, Any] | None:
     """Move an active cycle to its next step after a phase completed.
 
     Starts the next focus/break session at the current moment, or
     completes the cycle when no steps remain. Re-syncing to real time
     here is deliberate: after an absence the finished phase is recorded
     and the next one begins fresh rather than backfilling missed time.
+
+    Args:
+        conn: An open database connection.
+        cycle_id: The id of the running cycle to advance.
 
     Returns:
         An event dict for the CLI, or None if the cycle was already
@@ -117,6 +132,12 @@ def summarize(steps: list[dict[str, Any]]) -> dict[str, Any]:
 
     The final break of a plan (when present) is considered the long
     break; all earlier breaks are short breaks.
+
+    Args:
+        steps: The parsed step list for a cycle.
+
+    Returns:
+        A dict of focus/break counts and totals.
     """
     focus = [s for s in steps if s["kind"] == "focus"]
     breaks = [s for s in steps if s["kind"] == "break"]
@@ -131,6 +152,10 @@ def summarize(steps: list[dict[str, Any]]) -> dict[str, Any]:
 
 def next_step(cycle: dict[str, Any], position: int) -> dict[str, Any] | None:
     """Describe the step that follows position in a cycle's plan.
+
+    Args:
+        cycle: The stored cycle row, whose "plan" is JSON text.
+        position: The current phase index in the plan.
 
     Returns:
         Dict with "kind", "minutes", "position", "total",
