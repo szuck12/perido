@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-08-28
+
+### Changed
+- CI lint and audit tooling is pinned (`ruff==0.16.5`, `pip-audit==2.10.1`)
+  so results are reproducible; lint findings now pass under ruff 0.16.5's
+  expanded default rules.
+- README test instructions now run from the project `.venv`, matching
+  what `setup.sh` creates.
+
 ## [1.4.2] - 2026-08-28
 
 ### Added

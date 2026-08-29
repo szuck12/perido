@@ -5,31 +5,13 @@
 
 ## Done
 
-- [x] 2026-08-22 — `perido shorten MINUTES` trims an active session,
-      recorded across history and stats as trimmed time (#timer, #cli,
-      #stats)
-- [x] 2026-08-22 — Added `--extrashort` preset (10 min focus / 3 min
-      break) (#config, #cli)
-- [x] 2026-08-22 — Cycle roster reworked: removed tabata; added monolith,
-      summit, and ultra long-block cycles; lengthened clockwork and grind
-      to five focus periods (18 cycles total, documented alphabetically)
-      (#cycles, #docs)
-- [x] 2026-08-22 — README overhaul: consolidated cycle tables into one
-      reference with work/break totals and expanded test instructions
-      (#docs)
-- [x] 2026-08-22 — Release 1.4.0: changelog history restated as releases
-      1.0.0 through 1.4.0 (#docs)
-- [x] 2026-08-22 — Security audit section added to the code review guide;
-      numeric inputs now validate finiteness across argv and config
-      parsing (#docs, #config, #cli, #bug)
-- [x] 2026-08-26 — `month` command with a bar chart of focus minutes over
-      the last 30 days, grouped by month (#stats, #cli, #test)
-- [x] 2026-08-28 — Terminal output hardened: control characters and
-      escape sequences stripped from config- and state-derived labels
-      (#config, #cli, #bug)
-- [x] 2026-08-28 — Release 1.4.2: corrupt-database recovery, numeric caps
-      for durations, hostile state-file guards, pinned dev dependency,
-      SECURITY.md, dependabot, and CI (#docs, #infra, #bug)
+- [x] 2026-08-28 — CI lint and audit tooling pinned (`ruff==0.16.5`,
+      `pip-audit==2.10.1`); lint findings fixed against ruff 0.16.5's
+      expanded default rules (#infra, #test)
+- [x] 2026-08-28 — README test instructions now run from the project
+      `.venv`, matching what `setup.sh` creates (#docs)
+- [x] 2026-08-28 — Release 1.4.3: reproducible CI tooling and venv-based
+      test docs (#docs, #infra)
 
 ## High Priority
 

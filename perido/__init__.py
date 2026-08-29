@@ -1,7 +1,7 @@
 # __init__.py
 # Perido — a local-first command-line Pomodoro timer with a focus journey.
 
-__version__ = "1.4.2"
+__version__ = "1.4.3"
 
 
 class PeridoError(Exception):

@@ -5,7 +5,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PYTHON="${PYTHON:-/usr/local/bin/python3}"
+PYTHON="${PYTHON:-python3}"
 command -v "$PYTHON" >/dev/null 2>&1 || PYTHON=python3
 
 if [ ! -x .venv/bin/python ]; then

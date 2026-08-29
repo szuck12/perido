@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **1.4.2** — [Changelog](CHANGELOG.md)
+Current version: **1.4.3** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -62,7 +62,7 @@ pip install .
 Verify:
 
 ```bash
-perido --version               # perido 1.4.1
+perido --version               # perido 1.4.3
 ```
 
 `requirements.txt` installs pytest for running the test suite; it is not
@@ -281,6 +281,10 @@ perido/
 │   └── workflows/
 │       └── ci.yml                # Test, lint, and dependency audit on
 │                                 # every push and pull request.
+├── .superset/
+│   ├── config.json                # Declares the workspace setup step.
+│   └── setup.sh                   # Workspace bootstrap: creates .venv
+│                                  # and installs perido (editable).
 ├── CHANGELOG.md                   # Version history and release notes.
 ├── LICENSE                        # MIT license.
 ├── README.md                      # This file.

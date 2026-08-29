@@ -380,6 +380,8 @@ date against the release it gated.
 
 Audit log:
 
+- 2026-08-28 (1.4.3) — Gitleaks plus grep secret sweep of tree and
+  history clean; CI lint/audit tooling pinned for reproducible checks.
 - 2026-08-28 (1.4.2) — Terminal injection closed at every render path
   including the idle view; sort-order whitelist; corrupt-database
   recovery; extreme duration values capped; hand-edited state files
