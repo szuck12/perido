@@ -335,25 +335,33 @@ perido/
 
 ## Tests
 
-Run the full suite:
+Run the full suite from the project's virtual environment:
 
 ```bash
-pip install -r requirements.txt
-python3 -m pytest tests/
+./setup.sh                                  # create the venv and install perido
+source .venv/bin/activate
+pip install -r requirements.txt             # installs pytest (test-only dep)
+python -m pytest tests/
 ```
 
 Run a single test file:
 
 ```bash
-python3 -m pytest tests/test_timer.py
+python -m pytest tests/test_timer.py
 ```
 
 Run one test by node id or keyword:
 
 ```bash
-python3 -m pytest tests/test_timer.py::test_shorten_pulls_end_time_earlier
-python3 -m pytest tests/test_timer.py -k shorten
+python -m pytest tests/test_timer.py::test_shorten_pulls_end_time_earlier
+python -m pytest tests/test_timer.py -k shorten
 ```
+
+Always run the tests from the project venv. Installing
+`requirements.txt` into a shared system Python can collide with pytest
+plugins from other projects (for example `pytest-asyncio` pins
+`pytest<9`, which conflicts with perido's `pytest==9.1.1`); the venv
+keeps the test environment isolated and reproducible.
 
 Add `-v` for verbose output. The suite uses a fake clock and an isolated
 data directory, so it never touches your real data and always finishes in
