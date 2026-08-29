@@ -94,7 +94,7 @@ code block.
 Standardize markers for incomplete or flagged code.
 
 ```python
-# TODO(szuck12): support half-minute durations in cycle plans
+# TODO(owner): support half-minute durations in cycle plans
 # FIXME: midnight wrap-around in peak-hour windows
 ```
 
