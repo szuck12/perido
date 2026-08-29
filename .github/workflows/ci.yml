@@ -11,8 +11,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install project and dev tools
@@ -20,7 +20,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .
           python -m pip install -r requirements.txt
-          python -m pip install ruff pip-audit
+          # Pinned so lint and audit results are deterministic.
+          python -m pip install ruff==0.16.5 pip-audit==2.10.1
       - name: Lint
         run: ruff check perido tests
       - name: Test

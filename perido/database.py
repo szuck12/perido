@@ -9,7 +9,7 @@ import os
 import sqlite3
 import sys
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -94,7 +94,7 @@ def connect() -> sqlite3.Connection:
 def _recover_corrupt_db() -> None:
     """Move a corrupt database aside and log a one-line warning."""
     path = db_path()
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     backup = path.with_name(f"perido.db.corrupt-{stamp}")
     try:
         for i in range(100):
@@ -314,8 +314,8 @@ def query_sessions(
     if order not in ("ASC", "DESC"):
         raise ValueError(f"unsupported order: {order!r}")
     where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
-    sql = (  # noqa: S608
-        f"SELECT * FROM sessions{where} ORDER BY start_time {order}"
+    sql = (
+        f"SELECT * FROM sessions{where} ORDER BY start_time {order}"  # noqa: S608
     )
     if limit is not None:
         sql += f" LIMIT {int(limit)}"

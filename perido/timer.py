@@ -26,7 +26,7 @@ def _parse(value: str) -> datetime:
 
 
 def _mmss(seconds: float) -> str:
-    total = max(0, int(round(seconds)))
+    total = max(0, round(seconds))
     return f"{total // 60:02d}:{total % 60:02d}"
 
 

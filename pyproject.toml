@@ -39,3 +39,6 @@ version = { attr = "perido.__version__" }
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.ruff.lint]
+extend-select = ["S608"]

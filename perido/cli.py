@@ -16,10 +16,14 @@ from . import PeridoError, __version__, cycles, database, insights, stats, timer
 from .config import (
     MAX_MINUTES,
     PRESETS,
-    load as load_config,
-    reset as reset_config,
     resolve_duration,
     set_value,
+)
+from .config import (
+    load as load_config,
+)
+from .config import (
+    reset as reset_config,
 )
 
 # ---------------------------------------------------------------------
@@ -41,7 +45,7 @@ def color(text: str, code: str) -> str:
 
 def fmt_clock(seconds: float) -> str:
     """Format a countdown as M:SS or H:MM:SS (e.g. 17:34, 1:05:00)."""
-    total = max(0, int(round(seconds)))
+    total = max(0, round(seconds))
     if total >= 3600:
         return f"{total // 3600}:{total % 3600 // 60:02d}:{total % 60:02d}"
     return f"{total // 60}:{total % 60:02d}"
@@ -49,7 +53,7 @@ def fmt_clock(seconds: float) -> str:
 
 def fmt_span(seconds: float) -> str:
     """Format an elapsed span exactly: 2h 05m, 18m 42s, or 45s."""
-    total = max(0, int(round(seconds)))
+    total = max(0, round(seconds))
     if total >= 3600:
         return f"{total // 3600}h {total % 3600 // 60:02d}m"
     if total >= 60:
@@ -59,7 +63,7 @@ def fmt_span(seconds: float) -> str:
 
 def fmt_minutes(seconds: float) -> str:
     """Format a span rounded to minutes: 2h 05m, 25m, or 0m."""
-    minutes = int(round(max(0.0, seconds) / 60))
+    minutes = round(max(0.0, seconds) / 60)
     if minutes >= 60:
         return f"{minutes // 60}h {minutes % 60:02d}m"
     return f"{minutes}m"

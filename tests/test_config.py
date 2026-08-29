@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import itertools
 import json
 
 import pytest
@@ -45,7 +46,7 @@ def test_cycle_plan_shapes(home):
     for name, steps in cycles.items():
         kinds = [step["kind"] for step in steps]
         assert kinds[0] == "focus", name
-        assert all(a != b for a, b in zip(kinds, kinds[1:])), name
+        assert all(a != b for a, b in itertools.pairwise(kinds)), name
     # Plans ending with focus have no trailing break (short, sprint).
     assert len(cycles["short"]) % 2 == 1
     assert len(cycles["sprint"]) % 2 == 1
