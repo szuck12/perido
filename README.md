@@ -271,6 +271,7 @@ PERIDO_HOME=/tmp/demo perido start
 | `Unknown key. Valid keys: ...` | Config keys are dotted presets like `focus.long` or `cycles.classic`. |
 | `--watch requires an interactive terminal.` | `--watch` needs a real TTY; run it directly in your shell. |
 | `ModuleNotFoundError: No module named 'perido'` | This only affects editable installs (`pip install -e .`) on macOS with iCloud Drive sync enabled. iCloud's File Provider sets the `UF_HIDDEN` flag on `.venv` files, causing Python to skip the editable finder. Fix: `chflags -R nohidden .venv` then reinstall with `pip install -e .`. Or use `./setup.sh` which handles this automatically. Alternatively, use a non-editable install (`pip install .`) which is not affected. |
+| `No module named pytest` | The command ran a different Python than the project venv, or input mangled the word. Run `.venv/bin/python -m pytest`. If that interpreter still reports a missing module, clear the iCloud flags first: `chflags -R nohidden .venv` then `./setup.sh`. |
 
 ## Project Structure
 
@@ -342,23 +343,30 @@ perido/
 Run the full suite from the project's virtual environment:
 
 ```bash
-./setup.sh                                  # create the venv and install perido
-source .venv/bin/activate
-pip install -r requirements.txt             # installs pytest (test-only dep)
-python -m pytest tests/
+./setup.sh
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest
 ```
+
+Every command names the project interpreter explicitly (`.venv/bin/...`),
+so the result is the same whether you run it line by line, paste the
+whole block, or activate the venv first. Avoid bare `python` or
+`pytest`: they point at whatever interpreter your PATH happens to
+resolve, and interactive input can silently change the word you meant
+to type (for example, autocomplete turning `pytest` into `pytests`,
+which fails with `No module named pytests`).
 
 Run a single test file:
 
 ```bash
-python -m pytest tests/test_timer.py
+.venv/bin/python -m pytest tests/test_timer.py
 ```
 
 Run one test by node id or keyword:
 
 ```bash
-python -m pytest tests/test_timer.py::test_shorten_pulls_end_time_earlier
-python -m pytest tests/test_timer.py -k shorten
+.venv/bin/python -m pytest tests/test_timer.py::test_shorten_pulls_end_time_earlier
+.venv/bin/python -m pytest tests/test_timer.py -k shorten
 ```
 
 Always run the tests from the project venv. Installing

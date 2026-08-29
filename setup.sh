@@ -27,6 +27,20 @@ warn()  { printf "${YELLOW}▸${NC} %s\n" "$*"; }
 error() { printf "${RED}▸${NC} %s\n" "$*" >&2; }
 
 # ---------------------------------------------------------------------------
+# Fix macOS UF_HIDDEN flag (iCloud Drive / File Provider)
+# ---------------------------------------------------------------------------
+fix_hidden_flags() {
+    # chflags is macOS-only; silently skip on Linux.
+    if command -v chflags &>/dev/null; then
+        HIDDEN_COUNT=$(find .venv -flags +hidden 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$HIDDEN_COUNT" -gt 0 ]; then
+            info "Removing macOS UF_HIDDEN flag from $HIDDEN_COUNT files (iCloud fix)..."
+            chflags -R nohidden .venv
+        fi
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Check for Python 3.10+
 # ---------------------------------------------------------------------------
 if ! command -v "$PYTHON" &>/dev/null; then
@@ -61,23 +75,17 @@ fi
 # shellcheck source=/dev/null
 source .venv/bin/activate
 
+# Clear any iCloud-hidden flags before pip writes into the venv.
+fix_hidden_flags
+
 # ---------------------------------------------------------------------------
 # Install perido in editable mode
 # ---------------------------------------------------------------------------
 info "Installing perido in editable mode..."
 pip install -e . --quiet
 
-# ---------------------------------------------------------------------------
-# Fix macOS UF_HIDDEN flag (iCloud Drive / File Provider)
-# ---------------------------------------------------------------------------
-if command -v chflags &>/dev/null; then
-    # chflags is macOS-only; silently skip on Linux.
-    HIDDEN_COUNT=$(find .venv -flags +hidden 2>/dev/null | wc -l | tr -d ' ')
-    if [ "$HIDDEN_COUNT" -gt 0 ]; then
-        info "Removing macOS UF_HIDDEN flag from $HIDDEN_COUNT files (iCloud fix)..."
-        chflags -R nohidden .venv
-    fi
-fi
+# Re-apply before verify in case the File Provider re-tagged files.
+fix_hidden_flags
 
 # ---------------------------------------------------------------------------
 # Verify
