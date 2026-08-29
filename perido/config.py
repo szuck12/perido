@@ -12,6 +12,10 @@ from . import PeridoError, database
 
 PRESETS = ("extrashort", "short", "medium", "long", "extralong")
 
+# Longest accepted duration in minutes (~69 days, far beyond any use) so
+# oversized values are rejected before they can overflow time arithmetic.
+MAX_MINUTES = 100_000
+
 DEFAULTS: dict[str, Any] = {
     "focus": {
         "extrashort": 10,
@@ -83,6 +87,10 @@ def parse_plan(steps) -> list[dict[str, Any]]:
         raise PeridoError("A cycle needs at least one focus step.")
     if any(value <= 0 or not math.isfinite(value) for value in values):
         raise PeridoError("Cycle steps must be positive numbers of minutes.")
+    if any(value > MAX_MINUTES for value in values):
+        raise PeridoError(
+            f"Cycle steps must be at most {MAX_MINUTES:g} minutes."
+        )
     return [
         {"kind": "focus" if index % 2 == 0 else "break", "minutes": value}
         for index, value in enumerate(values)
@@ -163,6 +171,8 @@ def _number(raw: str, label: str) -> float:
         raise PeridoError(f"{label} must be a number (got '{raw}').") from None
     if not math.isfinite(value) or value <= 0:
         raise PeridoError(f"{label} must be positive (got {value:g}).")
+    if value > MAX_MINUTES:
+        raise PeridoError(f"{label} must be at most {MAX_MINUTES:g} minutes.")
     return value
 
 
@@ -239,5 +249,9 @@ def resolve_duration(
     if duration is not None:
         if not math.isfinite(duration) or duration <= 0:
             raise PeridoError("Duration must be a positive number of minutes.")
+        if duration > MAX_MINUTES:
+            raise PeridoError(
+                f"Duration must be at most {MAX_MINUTES:g} minutes."
+            )
         return float(duration)
     return float(load()[kind][preset or "medium"])

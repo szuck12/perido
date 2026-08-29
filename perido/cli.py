@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -13,6 +14,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from . import PeridoError, __version__, cycles, database, insights, stats, timer
 from .config import (
+    MAX_MINUTES,
     PRESETS,
     load as load_config,
     reset as reset_config,
@@ -92,6 +94,15 @@ def _day_label(day: date) -> str:
 def _trim(value: float) -> str:
     """Show 25.0 as 25 but keep 37.5 as 37.5."""
     return f"{value:g}"
+
+
+_ANSI_CSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def _clean_label(text: str) -> str:
+    """Strip ANSI sequences and control chars from display labels."""
+    text = _ANSI_CSI.sub("", text)
+    return "".join(ch for ch in text if ch.isprintable())
 
 
 def _focus_slot(steps: list[dict], position: int) -> tuple[int, int]:
@@ -221,7 +232,7 @@ def _idle_block(conn: sqlite3.Connection) -> str:
         "No active Pomodoro.\n\n"
         "Last session:\n"
         f"{_day_label(started.date())} at {fmt_tod(started)} —"
-        f" {fmt_minutes(seconds)} {last['status']}"
+        f" {fmt_minutes(seconds)} {_clean_label(last['status'])}"
     )
 
 
@@ -238,8 +249,8 @@ def watch() -> None:
     """
     if not sys.stdout.isatty():
         raise PeridoError("--watch requires an interactive terminal.")
-    try:
-        while True:
+    while True:
+        try:
             events = timer.finalize_expired()
             sys.stdout.write("\033[2J\033[H")
             render_events(events)
@@ -248,9 +259,13 @@ def watch() -> None:
                 break
             print(render_status())
             time.sleep(1)
-    except KeyboardInterrupt:
-        print("\nWatch stopped — your session keeps running.")
-        print("Run `perido status` to check on it.")
+        except PeridoError as exc:
+            print(color(_clean_label(str(exc)), "31"), file=sys.stderr)
+            break
+        except KeyboardInterrupt:
+            print("\nWatch stopped — your session keeps running.")
+            print("Run `perido status` to check on it.")
+            break
 
 
 # ---------------------------------------------------------------------
@@ -363,7 +378,7 @@ def cmd_cycle(args) -> int:
     session = result["session"]
     steps = database.json_loads(result["cycle"]["plan"])
     focus_total = sum(1 for step in steps if step["kind"] == "focus")
-    title = f"🍅 {args.name.upper()} POMODORO"
+    title = f"🍅 {_clean_label(args.name).upper()} POMODORO"
     print(color(title, "1"))
     print("─" * max(4, len(title) - 2))
     print()
@@ -435,7 +450,8 @@ def _history_row(
     if cycle and row["kind"] == "focus":
         steps = database.json_loads(cycle["plan"])
         slot, total_focus = _focus_slot(steps, row["cycle_position"])
-        tags.append(f"{row['cycle_name'].title()} {slot}/{total_focus}")
+        name = _clean_label(row["cycle_name"]).title()
+        tags.append(f"{name} {slot}/{total_focus}")
     if tags:
         result += "  " + "  ".join(tags)
     return (_day_label(started.date()), fmt_tod(started), duration, result)
@@ -532,7 +548,7 @@ def _render_config(cfg: dict) -> str:
     lines.append("Cycles")
     for name in sorted(cfg["cycles"]):
         plan = "·".join(_trim(step["minutes"]) for step in cfg["cycles"][name])
-        lines.append(f"  {name:<12}{plan} min")
+        lines.append(f"  {_clean_label(name):<12}{plan} min")
     return "\n".join(lines)
 
 
@@ -549,6 +565,10 @@ def _positive_minutes(text: str) -> float:
         raise argparse.ArgumentTypeError(f"'{text}' is not a number") from None
     if not math.isfinite(value) or value <= 0:
         raise argparse.ArgumentTypeError("must be a positive number of minutes")
+    if value > MAX_MINUTES:
+        raise argparse.ArgumentTypeError(
+            f"must be at most {MAX_MINUTES:g} minutes"
+        )
     return value
 
 
@@ -679,7 +699,7 @@ def main(argv: list[str] | None = None) -> int:
         render_events(timer.finalize_expired())
         return args.func(args) or 0
     except PeridoError as exc:
-        print(color(str(exc), "31"), file=sys.stderr)
+        print(color(_clean_label(str(exc)), "31"), file=sys.stderr)
         return 1
     except KeyboardInterrupt:
         return 130

@@ -467,3 +467,119 @@ def test_no_command_is_required():
     with pytest.raises(SystemExit) as excinfo:
         cli.main([])
     assert excinfo.value.code == 2
+
+
+def test_clean_label_strips_control_chars():
+    assert cli._clean_label("abc\x1b[31mred\x1b[0m") == "abcred"
+    assert cli._clean_label("ok\x00\x07") == "ok"
+    assert cli._clean_label("plain") == "plain"
+
+
+def _write_config(contents: str):
+    data_dir = database.data_dir()
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "config.json").write_text(contents, encoding="utf-8")
+
+
+def test_config_render_sanitizes_cycle_name(home, clock, capsys):
+    _write_config('{"cycles": {"\\u001b[31mred\\u001b[0m": [25, 5]}}')
+    cli.main(["config"])
+    out = capsys.readouterr().out
+    assert "red" in out
+    assert "\x1b" not in out
+    assert "classic" in out  # defaults still present
+
+
+def test_cycle_banner_sanitizes_name(home, clock, capsys):
+    _write_config('{"cycles": {"\\u001b[31mred\\u001b[0m": [25, 5]}}')
+    code = cli.main(["cycle", "\x1b[31mred\x1b[0m"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "RED POMODORO" in out
+    assert "\x1b" not in out
+
+
+def test_history_sanitizes_cycle_name(home, clock, seed, capsys):
+    conn = database.connect()
+    plan = [{"kind": "focus", "minutes": 25}]
+    cycle_id = database.create_cycle(
+        conn, "\x1b[31mred\x1b[0m", plan, 0, clock()
+    )
+    row = seed(minutes=25, cycle_name="\x1b[31mred\x1b[0m", cycle_position=0)
+    database.update_session(conn, row["id"], cycle_id=cycle_id)
+    conn.close()
+    cli.main(["history"])
+    out = capsys.readouterr().out
+    assert "Red" in out or "red" in out
+    assert "\x1b" not in out
+
+
+def test_error_message_sanitizes_cycle_name(home, clock, capsys):
+    code = cli.main(["cycle", "\x1b[31mExploit\x1b[0m"])
+    out = capsys.readouterr().err
+    assert code == 1
+    assert "Exploit" in out
+    assert "\x1b" not in out
+
+
+def test_idle_block_sanitizes_status(home, clock, seed, capsys):
+    seed(status="\x1b[31mHACKED\x1b[0m")
+    code = cli.main(["status"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "HACKED" in out
+    assert "\x1b" not in out
+
+
+def test_start_rejects_huge_duration(home):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["start", "--duration", "1e300"])
+    assert excinfo.value.code == 2
+
+
+def test_extend_rejects_huge_minutes(home):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["extend", "1e300"])
+    assert excinfo.value.code == 2
+
+
+def test_config_set_rejects_huge_duration(home, capsys):
+    code = cli.main(["config", "set", "focus.short", "1e300"])
+    assert code == 1
+    assert "at most 100000" in capsys.readouterr().err
+
+
+def test_status_with_garbage_timestamp_exits_cleanly(home, clock, capsys):
+    conn = database.connect()
+    conn.execute(
+        "INSERT INTO sessions"
+        " (start_time, end_time, planned_minutes, status, kind)"
+        " VALUES (?, ?, ?, ?, ?)",
+        ("not-a-date", "also-bad", 25.0, "active", "focus"),
+    )
+    conn.commit()
+    conn.close()
+    code = cli.main(["status"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "unreadable" in err
+    assert "Traceback" not in err
+
+
+def test_history_with_corrupt_plan_exits_cleanly(home, clock, seed, capsys):
+    conn = database.connect()
+    cycle_id = database.create_cycle(
+        conn, "hostile", [{"kind": "focus", "minutes": 25}], 0, clock()
+    )
+    conn.execute(
+        "UPDATE cycles SET plan = ? WHERE id = ?", ("{not json", cycle_id)
+    )
+    conn.commit()
+    row = seed(minutes=25, cycle_name="hostile", cycle_position=0)
+    database.update_session(conn, row["id"], cycle_id=cycle_id)
+    conn.close()
+    code = cli.main(["history"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "unreadable" in err
+    assert "Traceback" not in err

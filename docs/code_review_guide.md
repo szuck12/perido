@@ -329,11 +329,18 @@ run it fresh at each audit rather than trusting earlier results.
 6. Trace strings originating in config or state files to terminal
    output; control characters must not reach the screen raw.
 7. Runtime dependency count stays zero; dev dependencies pinned with a
-   version floor; no post-install hooks.
+   version floor; no post-install hooks. CI (`.github/workflows/ci.yml`)
+   runs ruff, pytest, and `pip-audit` on every push/PR, and dependabot
+   opens weekly bump PRs from `.github/dependabot.yml`. Before each
+   release, re-run the note 1 secret sweep with gitleaks
+   (`gitleaks detect --source .`) plus the grep sweep for raw credentials.
 8. Corrupt or truncate each state file; confirm clean fallback to
    defaults rather than a traceback or silent corruption.
 9. Review workflows, hooks, and setup scripts for what executes on
    clone/bootstrap; check branch protection and the collaborator list.
+   The tracked `.superset/` scaffold is a workspace bootstrap (venv +
+   editable install) with no secrets or network calls — keep it that
+   way.
 
 ### 7c. Severity Taxonomy and Reporting Protocol
 
@@ -370,6 +377,15 @@ Every accepted fix lands with a regression test at the matching layer
 (argument parsing, configuration loader, renderer, database). Rerun the
 full 7b sweep once more before closing the audit, and note the audit
 date against the release it gated.
+
+Audit log:
+
+- 2026-08-28 (1.4.2) — Terminal injection closed at every render path
+  including the idle view; sort-order whitelist; corrupt-database
+  recovery; extreme duration values capped; hand-edited state files
+  (timestamps, cycle plans) fail cleanly instead of tracing back; CI
+  enforces pytest, ruff, and pip-audit. Secrets sweep of tree and
+  history was clean.
 
 ---
 

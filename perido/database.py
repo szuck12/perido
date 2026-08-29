@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -11,6 +12,8 @@ import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
+
+from . import PeridoError
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
@@ -70,11 +73,48 @@ def db_path() -> Path:
 
 
 def connect() -> sqlite3.Connection:
-    """Open a connection with the schema ensured and dict rows."""
-    conn = sqlite3.connect(db_path())
-    conn.row_factory = sqlite3.Row
-    conn.executescript(_SCHEMA)
-    return conn
+    """Open a connection with the schema ensured and dict rows.
+
+    If the database file is corrupt, it is moved aside and recreated
+    so a hostile or damaged state file cannot crash the tool.
+    """
+    try:
+        conn = sqlite3.connect(db_path())
+        conn.row_factory = sqlite3.Row
+        conn.executescript(_SCHEMA)
+        return conn
+    except sqlite3.DatabaseError:
+        _recover_corrupt_db()
+        conn = sqlite3.connect(db_path())
+        conn.row_factory = sqlite3.Row
+        conn.executescript(_SCHEMA)
+        return conn
+
+
+def _recover_corrupt_db() -> None:
+    """Move a corrupt database aside and log a one-line warning."""
+    path = db_path()
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup = path.with_name(f"perido.db.corrupt-{stamp}")
+    try:
+        for i in range(100):
+            candidate = path.with_name(
+                f"perido.db.corrupt-{stamp}{'-' + str(i) if i else ''}"
+            )
+            if not candidate.exists():
+                backup = candidate
+                break
+        path.rename(backup)
+    except OSError:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+    print(
+        "Warning: perido.db was corrupt and has been reset. "
+        "The damaged file was kept as backup.",
+        file=sys.stderr,
+    )
 
 
 def iso(dt: datetime) -> str:
@@ -97,8 +137,19 @@ def parse_ts(value: str) -> datetime:
 
     Returns:
         The parsed aware datetime.
+
+    Raises:
+        PeridoError: If the value is not a valid ISO-8601 timestamp,
+            so a hand-edited database fails cleanly instead of
+            crashing callers with a traceback.
     """
-    return datetime.fromisoformat(value)
+    try:
+        return datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        raise PeridoError(
+            "A recorded timestamp is unreadable; the database may be"
+            " corrupt."
+        ) from None
 
 
 # ---------------------------------------------------------------------
@@ -260,6 +311,8 @@ def query_sessions(
     if statuses is not None:
         clauses.append(f"status IN ({', '.join('?' * len(statuses))})")
         params.extend(statuses)
+    if order not in ("ASC", "DESC"):
+        raise ValueError(f"unsupported order: {order!r}")
     where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
     sql = (  # noqa: S608
         f"SELECT * FROM sessions{where} ORDER BY start_time {order}"
@@ -372,12 +425,43 @@ def json_dumps(value: Any) -> str:
 
 
 def json_loads(value: str) -> Any:
-    """Deserialize stored JSON text.
+    """Deserialize a stored cycle plan, validating its shape.
 
     Args:
-        value: A JSON string, usually from the `plan` column.
+        value: A JSON string from the `plan` column.
 
     Returns:
-        The deserialized Python structure.
+        The list of step dicts in the plan.
+
+    Raises:
+        PeridoError: If the value is not a JSON list of step dicts
+            with numeric minute values, so a hand-edited database
+            fails cleanly instead of crashing callers with a
+            traceback.
     """
-    return json.loads(value)
+    try:
+        steps = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        raise PeridoError(
+            "A stored cycle plan is unreadable; the database may be"
+            " corrupt."
+        ) from None
+    if not _is_plan(steps):
+        raise PeridoError(
+            "A stored cycle plan has an unexpected shape; the database"
+            " may be corrupt."
+        )
+    return steps
+
+
+def _is_plan(value: Any) -> bool:
+    """True if value is a list of valid focus/break step dicts."""
+    return isinstance(value, list) and all(
+        isinstance(step, dict)
+        and "kind" in step
+        and "minutes" in step
+        and isinstance(step["minutes"], (int, float))
+        and not isinstance(step["minutes"], bool)
+        and math.isfinite(step["minutes"])
+        for step in value
+    )

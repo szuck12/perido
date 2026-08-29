@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-08-28
+
+### Added
+- `SECURITY.md` with supported versions, a private disclosure channel, and
+  the reporting workflow; a `.github/dependabot.yml` now opens weekly PRs
+  for pinned dev dependency updates.
+- A CI workflow (`.github/workflows/ci.yml`) that runs the test suite,
+  linting, and a dependency audit on every push and pull request.
+- Regression tests covering corrupt-database recovery, sanitization of
+  config- and state-derived labels, strict sort-order validation, and
+  graceful handling of extreme or malformed stored values.
+
+### Security
+- Hardened terminal output: control characters and escape sequences are
+  stripped from config- and state-derived labels before they reach the
+  screen.
+- Tightened the query layer: sort order is restricted to a fixed whitelist.
+- A corrupt database file is moved aside and recreated instead of
+  crashing; the damaged file is kept as a backup.
+- Duration values are capped at a documented maximum so oversized or
+  extreme inputs are rejected before they can overflow time arithmetic.
+- A hand-edited database holding unreadable timestamps or cycle plans now
+  fails cleanly instead of crashing commands with a traceback.
+- Dev dependency `pytest` is now pinned exactly (`==9.1.1`).
+
+### Fixed
+- A corrupt or truncated database file previously crashed the tool on
+  startup; Perido now recovers cleanly by backing up the bad file and
+  recreating the schema.
+- Extraordinarily large duration values (e.g. `perido start --duration
+  1e300`) previously crashed with an overflow traceback; Perido now
+  rejects them with a clear message.
+- Stored cycle names or statuses containing control characters could
+  reach the screen through the idle status view; these are now stripped
+  like every other label.
+
 ## [1.4.1] - 2026-08-26
 
 ### Added

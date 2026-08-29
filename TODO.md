@@ -5,12 +5,6 @@
 
 ## Done
 
-- [x] 2026-08-22 — Changelog process rewritten as numbered release steps;
-      package version now sourced dynamically from `perido.__version__`
-      (#docs, #infra)
-- [x] 2026-08-22 — Eleven new shape-based default cycles (16 presets
-      total): ladder, descent, twist, clockwork, passion, marathon,
-      tabata, warmup, flow, zen, grind (#cycles)
 - [x] 2026-08-22 — `perido shorten MINUTES` trims an active session,
       recorded across history and stats as trimmed time (#timer, #cli,
       #stats)
@@ -30,6 +24,12 @@
       parsing (#docs, #config, #cli, #bug)
 - [x] 2026-08-26 — `month` command with a bar chart of focus minutes over
       the last 30 days, grouped by month (#stats, #cli, #test)
+- [x] 2026-08-28 — Terminal output hardened: control characters and
+      escape sequences stripped from config- and state-derived labels
+      (#config, #cli, #bug)
+- [x] 2026-08-28 — Release 1.4.2: corrupt-database recovery, numeric caps
+      for durations, hostile state-file guards, pinned dev dependency,
+      SECURITY.md, dependabot, and CI (#docs, #infra, #bug)
 
 ## High Priority
 
@@ -38,9 +38,6 @@
 ## Medium Priority
 
 (Should get done, not urgent.)
-
-- [ ] Validate cycle names loaded from config against a safe charset
-      before they are rendered (#config, #bug)
 
 ## Low Priority
 

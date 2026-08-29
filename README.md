@@ -1,6 +1,6 @@
 # Perido
 
-Current version: **1.4.1** — [Changelog](CHANGELOG.md)
+Current version: **1.4.2** — [Changelog](CHANGELOG.md)
 
 A local-first Pomodoro timer for the command line. Start focus sessions and
 breaks, run multi-session cycles, and watch your focus journey take shape
@@ -101,7 +101,8 @@ installs (see Troubleshooting below).
 `start` and `break` accept a preset flag (`--extrashort`, `--short`,
 `--medium`, `--long`, `--extralong`) or an exact duration (`--duration 40`).
 With no flag they use the configured medium duration — except `break`,
-which defaults to short.
+which defaults to short. Durations are capped at a sane maximum
+(100,000 minutes); larger values are rejected with a clear message.
 
 Add `-w` / `--watch` to `start`, `break`, `cycle`, or `status` to stay in
 the terminal and watch the timer count down live. Ctrl-C stops watching
@@ -275,9 +276,15 @@ PERIDO_HOME=/tmp/demo perido start
 
 ```
 perido/
+├── .github/
+│   ├── dependabot.yml            # Weekly pip dependency bump PRs.
+│   └── workflows/
+│       └── ci.yml                # Test, lint, and dependency audit on
+│                                 # every push and pull request.
 ├── CHANGELOG.md                   # Version history and release notes.
 ├── LICENSE                        # MIT license.
 ├── README.md                      # This file.
+├── SECURITY.md                    # How to report vulnerabilities.
 ├── TODO.md                        # Planned work, priorities, and ideas
 │                                  # (see docs/maintain_todo.md).
 ├── setup.sh                       # One-command install script (handles
@@ -351,6 +358,18 @@ python3 -m pytest tests/test_timer.py -k shorten
 Add `-v` for verbose output. The suite uses a fake clock and an isolated
 data directory, so it never touches your real data and always finishes in
 under a second.
+
+The same suite, plus linting and a dependency audit, runs automatically on
+every push and pull request via the CI workflow in `.github/workflows/`.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the supported-versions policy and how to
+report a suspected vulnerability privately. This project is a local,
+offline CLI with no runtime dependencies and no credentials — security
+issues here are hardening concerns rather than remote exploits. CI runs a
+dependency audit on every push, and dependabot files weekly bump PRs for
+the pinned dev dependency.
 
 ## License
 

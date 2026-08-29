@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from perido import database
+import pytest
+
+from perido import PeridoError, database
 
 
 def test_data_dir_respects_perido_home(home):
@@ -23,6 +25,25 @@ def test_connect_creates_schema(home):
     }
     assert {"sessions", "cycles"} <= tables
     conn.close()
+
+
+def test_corrupt_db_recovers(home, capsys):
+    database.data_dir()
+    path = database.db_path()
+    path.write_bytes(b"this is not a sqlite database\x00\x01\x02\xff")
+    conn = database.connect()
+    tables = {
+        row["name"]
+        for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table'"
+        ).fetchall()
+    }
+    assert {"sessions", "cycles"} <= tables
+    conn.close()
+    backup = list(home.glob("perido.db.corrupt-*"))
+    assert backup, "expected a corrupt-db backup file"
+    assert backup[0].exists()
+    assert "corrupt" in capsys.readouterr().err
 
 
 def test_session_roundtrip(home, clock):
@@ -137,3 +158,34 @@ def test_get_cycle_none_for_missing_or_null_id(home):
     assert database.get_cycle(conn, "nope") is None
     assert database.get_cycle(conn, None) is None
     conn.close()
+
+
+def test_query_sessions_rejects_invalid_order(home):
+    conn = database.connect()
+    with pytest.raises(ValueError):
+        database.query_sessions(conn, order="id; DROP TABLE sessions")
+    conn.close()
+
+
+def test_parse_ts_rejects_garbage():
+    with pytest.raises(PeridoError):
+        database.parse_ts("not-a-date")
+
+
+def test_json_loads_rejects_invalid_plan():
+    with pytest.raises(PeridoError):
+        database.json_loads("{not json")
+    with pytest.raises(PeridoError):
+        database.json_loads('"a bare string"')
+    with pytest.raises(PeridoError):
+        database.json_loads("[null, 4]")
+
+
+def test_json_loads_accepts_plan():
+    steps = database.json_loads('[{"kind":"focus","minutes":25}]')
+    assert steps == [{"kind": "focus", "minutes": 25}]
+
+
+def test_json_loads_rejects_nonfinite_minutes():
+    with pytest.raises(PeridoError):
+        database.json_loads('[{"kind":"focus","minutes":NaN}]')
