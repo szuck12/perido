@@ -91,12 +91,17 @@ def test_pause_and_resume_preserve_remaining(home, clock):
     clock.advance(minutes=10)
     paused = timer.pause()
     assert paused["paused_at"] is not None
+    # Remaining is frozen during the pause.
+    assert timer.remaining_seconds(paused) == 15 * 60
 
     clock.advance(minutes=7)
+    # Still frozen — real time advanced but remaining did not.
+    assert timer.remaining_seconds(timer.active_session()) == 15 * 60
+
     resumed = timer.resume()
     assert resumed["paused_at"] is None
-    # The 7 paused minutes did not count.
-    assert timer.remaining_seconds(resumed) == 15 * 60
+    # After resume, remaining counts down from the frozen value.
+    assert timer.remaining_seconds(resumed) == 8 * 60
     assert resumed["pause_seconds"] == 7 * 60
 
 
@@ -120,17 +125,19 @@ def test_resume_without_paused_session(home, clock):
         timer.resume()
 
 
-def test_long_pause_shifts_end_time(home, clock):
+def test_long_pause_keeps_remaining_frozen(home, clock):
     timer.start(25)
     start = timer.active_session()
     original_end = start["end_time"]
     timer.pause()
     clock.advance(hours=2)
+    # Remaining is frozen at the value it had when paused.
+    assert timer.remaining_seconds(timer.active_session()) == 25 * 60
     resumed = timer.resume()
-    shifted = database.parse_ts(resumed["end_time"]) - database.parse_ts(
+    # End time is not shifted — remaining resumes from the frozen value.
+    assert database.parse_ts(resumed["end_time"]) == database.parse_ts(
         original_end
     )
-    assert shifted == timedelta(hours=2)
 
 
 # ---------------------------------------------------------------------
@@ -329,13 +336,18 @@ def test_paused_session_never_auto_completes(home, clock):
     timer.start(25)
     clock.advance(minutes=24)
     timer.pause()
+    # Remaining is frozen at 1 minute during the pause.
+    assert timer.remaining_seconds(timer.active_session()) == 60.0
     clock.advance(hours=5)
+    # Finalize never touches a paused session, even after hours.
     assert timer.finalize_expired() == []
     session = timer.active_session()
     assert session is not None and session["paused_at"]
-    # Resuming restores the frozen remainder.
+    # Remaining stays frozen until resume.
+    assert timer.remaining_seconds(session) == 60.0
     resumed = timer.resume()
-    assert timer.remaining_seconds(resumed) == 60.0
+    # After resume, remaining counts down from the frozen value.
+    assert timer.remaining_seconds(resumed) == 0.0
 
 
 def test_recovery_after_process_death(home, clock):
@@ -360,3 +372,77 @@ def test_stale_session_finalizes_before_new_start(home, clock):
     rows = database.query_sessions(conn, statuses=("completed",))
     conn.close()
     assert len(rows) == 1
+
+
+# ---------------------------------------------------------------------
+# Pause timing — remaining_seconds freezes during pause
+# ---------------------------------------------------------------------
+
+
+def test_remaining_seconds_frozen_during_pause(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)
+    paused = timer.pause()
+    # Remaining frozen at 15 minutes.
+    assert timer.remaining_seconds(paused) == 15 * 60
+    # Real time advances but remaining stays frozen.
+    clock.advance(minutes=30)
+    assert timer.remaining_seconds(timer.active_session()) == 15 * 60
+
+
+def test_remaining_seconds_frozen_with_at_during_pause(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)
+    paused = timer.pause()
+    # The at= parameter is clamped to paused_at.
+    future = clock() + timedelta(hours=1)
+    assert timer.remaining_seconds(paused, at=future) == 15 * 60
+
+
+def test_remaining_seconds_resumes_counting_after_resume(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)
+    timer.pause()
+    clock.advance(minutes=5)
+    resumed = timer.resume()
+    # After resume, remaining counts down from the frozen value.
+    assert timer.remaining_seconds(resumed) == 10 * 60
+    clock.advance(minutes=3)
+    assert timer.remaining_seconds(timer.active_session()) == 7 * 60
+
+
+def test_extend_while_paused_changes_remaining_after_resume(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)
+    timer.pause()
+    timer.extend(10)
+    clock.advance(minutes=5)
+    resumed = timer.resume()
+    # Extended 10 min, paused 5 min: remaining = 15 + 10 - 5 = 20 min.
+    assert timer.remaining_seconds(resumed) == 20 * 60
+
+
+def test_shorten_while_paused_changes_remaining_after_resume(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)
+    timer.pause()
+    timer.shorten(5)
+    clock.advance(minutes=3)
+    resumed = timer.resume()
+    # Shortened 5 min, paused 3 min: remaining = 15 - 5 - 3 = 7 min.
+    assert timer.remaining_seconds(resumed) == 7 * 60
+
+
+def test_progress_fraction_frozen_during_pause(home, clock):
+    timer.start(25)
+    clock.advance(minutes=10)
+    timer.pause()
+    # Progress frozen at 40%.
+    assert timer.progress_fraction(timer.active_session()) == pytest.approx(
+        0.4
+    )
+    clock.advance(minutes=30)
+    # Still frozen.
+    assert timer.progress_fraction(timer.active_session()) == pytest.approx(
+        0.4
+    )

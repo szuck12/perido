@@ -61,6 +61,10 @@ def remaining_seconds(
 ) -> float:
     """Seconds left on a session's scheduled window (never negative).
 
+    Paused sessions freeze the remaining countdown at the pause instant
+    so that the displayed time does not tick down while the timer is
+    stopped.
+
     Args:
         session: The active or stored session row.
         at: Instant to measure from; defaults to the current clock.
@@ -69,6 +73,8 @@ def remaining_seconds(
         Remaining scheduled seconds, floored at zero.
     """
     moment = at or now()
+    if session["paused_at"]:
+        moment = min(moment, _parse(session["paused_at"]))
     end = _parse(session["end_time"])
     return max(0.0, (end - moment).total_seconds())
 
@@ -198,7 +204,11 @@ def pause() -> dict[str, Any]:
 
 
 def resume() -> dict[str, Any]:
-    """Resume a paused session by shifting its end forward by the pause.
+    """Resume a paused session by recording the paused duration.
+
+    The end time is not shifted — remaining_seconds() already freezes
+    the countdown during the pause, so resuming simply clears the
+    pause and accumulates the paused duration for focus-time accounting.
 
     Raises:
         PeridoError: If there is no paused session.
@@ -210,11 +220,9 @@ def resume() -> dict[str, Any]:
         if not session or not session["paused_at"]:
             raise PeridoError("No paused Pomodoro session to resume.")
         delta = now() - _parse(session["paused_at"])
-        new_end = _parse(session["end_time"]) + delta
         database.update_session(
             conn,
             session["id"],
-            end_time=database.iso(new_end),
             pause_seconds=session["pause_seconds"] + delta.total_seconds(),
             paused_at=None,
         )

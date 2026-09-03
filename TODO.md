@@ -5,6 +5,14 @@
 
 ## Done
 
+- [x] 2026-08-28 — Fixed pause timing: `remaining_seconds()` now freezes
+      during pause; `resume()` no longer shifts end time (#timer, #bug)
+- [x] 2026-08-28 — Fixed focus numbering: `Next:` line shows correct
+      focus count (e.g. 6 for marathon) instead of total steps (12)
+      (#cycles, #cli, #bug)
+- [x] 2026-08-28 — Added break numbering: status, events, history, and
+      `Next:` line now show `Break X of Y` for non-final breaks;
+      last step shows `Next: End of [cycle name]` (#cycles, #cli)
 - [x] 2026-08-28 — CI lint and audit tooling pinned (`ruff==0.16.5`,
       `pip-audit==2.10.1`); lint findings fixed against ruff 0.16.5's
       expanded default rules (#infra, #test)

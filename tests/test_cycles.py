@@ -316,5 +316,82 @@ def test_next_step_labels(home, clock):
         "position": 1,
         "total": 8,
         "final_break": False,
+        "break_slot": 1,
+        "break_total": 4,
     }
     assert cycles.next_step(result["cycle"], 7) is None
+
+
+# ---------------------------------------------------------------------
+# next_step focus_total and break numbering
+# ---------------------------------------------------------------------
+
+
+def test_next_step_focus_total_for_marathon(home, clock):
+    result = cycles.start("marathon")
+    # Position 0 (focus) -> next is break at position 1.
+    nxt = cycles.next_step(result["cycle"], 0)
+    assert nxt["kind"] == "break"
+    assert nxt["break_slot"] == 1
+    assert nxt["break_total"] == 6
+    # Position 1 (break) -> next is focus at position 2.
+    nxt = cycles.next_step(result["cycle"], 1)
+    assert nxt["kind"] == "focus"
+    assert nxt["slot"] == 2
+    assert nxt["focus_total"] == 6
+
+
+def test_next_step_focus_total_for_classic(home, clock):
+    result = cycles.start("classic")
+    # Position 0 (focus) -> next is break.
+    nxt = cycles.next_step(result["cycle"], 0)
+    assert nxt["kind"] == "break"
+    assert nxt["break_total"] == 4
+    # Position 1 (break) -> next is focus with focus_total.
+    nxt = cycles.next_step(result["cycle"], 1)
+    assert nxt["kind"] == "focus"
+    assert nxt["focus_total"] == 4
+
+
+def test_next_step_final_break_has_no_break_slot(home, clock):
+    result = cycles.start("classic")
+    # Position 6 (focus) -> next is final break at position 7.
+    nxt = cycles.next_step(result["cycle"], 6)
+    assert nxt["kind"] == "break"
+    assert nxt["final_break"] is True
+    assert "break_slot" not in nxt
+    assert "break_total" not in nxt
+
+
+def test_next_step_monolith_has_focus_total_1(home, clock):
+    result = cycles.start("monolith")
+    # Monolith is a single focus step; no next step.
+    assert cycles.next_step(result["cycle"], 0) is None
+
+
+def test_advance_break_event_includes_slot_info(home, clock):
+    cycles.start("classic")
+    clock.advance(minutes=25)
+    events = timer.finalize_expired()
+    phase = events[1]
+    assert phase["event"] == "phase_start"
+    assert phase["kind"] == "break"
+    assert phase["break_slot"] == 1
+    assert phase["break_total"] == 4
+
+
+def test_advance_final_break_event_has_no_slot_info(home, clock):
+    cycles.start("classic")
+    # Complete 3 focus+break pairs, then the 4th focus.
+    for _ in range(3):
+        clock.advance(minutes=25)
+        timer.finalize_expired()
+        clock.advance(minutes=5)
+        timer.finalize_expired()
+    clock.advance(minutes=25)
+    events = timer.finalize_expired()
+    phase = events[1]
+    assert phase["kind"] == "break"
+    assert phase["final_break"] is True
+    assert "break_slot" not in phase
+    assert "break_total" not in phase

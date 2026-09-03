@@ -130,6 +130,9 @@ same rules.
 - [ ] Focus-time totals include interrupted partials; per-session
       aggregates (average, longest, typical/median) use completed
       sessions only.
+- [ ] `remaining_seconds()` freezes during pause (caps `moment` to
+      `paused_at`); `resume()` clears `paused_at` without shifting
+      `end_time`.
 
 ---
 
@@ -217,6 +220,10 @@ Systematic sweep of every failure mode across the codebase.
       (`_trim`).
 - [ ] Colour codes wrap whole lines and degrade gracefully when not
       a TTY.
+- [ ] Cycle phase numbering uses consistent formats: focus shows
+      `Focus X of Y`, breaks show `Break X of Y`, the final break
+      shows `Long break`, and the last step shows
+      `Next: End of [cycle name]`.
 
 ### 5b. Module Boundaries
 

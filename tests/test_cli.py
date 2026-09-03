@@ -141,7 +141,8 @@ def test_pause_and_resume_outputs(home, clock, capsys):
     out = capsys.readouterr().out
     assert code == 0
     assert "▶ Timer resumed" in out
-    assert "18:00 remaining" in out
+    # 9 minutes passed while paused; remaining counts down from frozen value.
+    assert "9:00 remaining" in out
 
 
 def test_pause_without_session(home, clock, capsys):
@@ -266,7 +267,7 @@ def test_cycle_transition_events_rendered_by_next_command(home, clock, capsys):
     assert code == 0
     assert "🍅 SESSION COMPLETE!" in out
     assert "10 minutes focused." in out
-    assert "☕ Break started." in out
+    assert "Break 1 of 2 started." in out
     assert "☕ ON BREAK" in out
 
 
@@ -440,20 +441,22 @@ def test_config_bad_usage(home, clock, capsys):
     assert "Usage:" in capsys.readouterr().err
 
 
-def test_history_break_rows_carry_no_cycle_tag(home, clock, seed, capsys):
-    """Only focus rows show 'Name slot/total'; breaks stay untagged."""
+def test_history_break_rows_carry_cycle_tag(home, clock, seed, capsys):
+    """Break rows show 'Name break slot/total' in cycle history."""
     conn = database.connect()
     plan = [
         {"kind": "focus", "minutes": 25},
         {"kind": "break", "minutes": 5},
+        {"kind": "focus", "minutes": 25},
+        {"kind": "break", "minutes": 15},
     ]
-    cycle_id = database.create_cycle(conn, "sprint", plan, 0, clock())
-    row = seed(kind="break", minutes=5, cycle_name="sprint", cycle_position=1)
+    cycle_id = database.create_cycle(conn, "classic", plan, 0, clock())
+    row = seed(kind="break", minutes=5, cycle_name="classic", cycle_position=1)
     database.update_session(conn, row["id"], cycle_id=cycle_id)
     conn.close()
     cli.main(["history"])
     out = capsys.readouterr().out
-    assert "Sprint" not in out
+    assert "Classic break 1/2" in out
     assert "✓ Complete" in out
 
 
@@ -583,3 +586,117 @@ def test_history_with_corrupt_plan_exits_cleanly(home, clock, seed, capsys):
     assert code == 1
     assert "unreadable" in err
     assert "Traceback" not in err
+
+
+# ---------------------------------------------------------------------
+# Cycle focus numbering — Issue 1 regression tests
+# ---------------------------------------------------------------------
+
+
+def test_marathon_focus_numbering_shows_correct_total(home, clock, capsys):
+    """Marathon has 6 focus steps; status must show 'X of 6', not 'X of 12'."""
+    cli.main(["cycle", "marathon"])
+    out = capsys.readouterr().out
+    assert "Focus 1 of 6" in out
+
+
+def test_next_line_shows_correct_focus_total(home, clock, capsys):
+    """The 'Next:' line during a break uses focus count, not step count."""
+    cli.main(["cycle", "marathon"])
+    clock.advance(minutes=30)
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    # At break position 1, next is focus 2 of 6.
+    assert "Next: Focus 2 of 6" in out
+
+
+# ---------------------------------------------------------------------
+# Break numbering — Issue 2 tests
+# ---------------------------------------------------------------------
+
+
+def test_break_numbering_in_status(home, clock, capsys):
+    """Break sessions show 'Break X of Y' in the status view."""
+    cli.main(["cycle", "classic"])
+    clock.advance(minutes=25)
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "Break 1 of 4" in out
+
+
+def test_break_numbering_in_phase_start_event(home, clock, capsys):
+    """Break phase-start events render with 'Break X of Y started.'."""
+    cli.main(["cycle", "classic"])
+    clock.advance(minutes=25)
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "Break 1 of 4 started." in out
+
+
+def test_final_break_shows_long_break(home, clock, capsys):
+    """The final break in a cycle shows 'Long break' without numbering."""
+    cli.main(["cycle", "classic"])
+    for _ in range(3):
+        clock.advance(minutes=25)
+        cli.main(["status"])
+        clock.advance(minutes=5)
+        cli.main(["status"])
+    clock.advance(minutes=25)
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "Long break started." in out
+    assert "Long break" in out
+
+
+def test_next_line_shows_break_numbering_with_duration(home, clock, capsys):
+    """The 'Next:' line for breaks shows 'Break X of Y (N-minute)'."""
+    cli.main(["cycle", "classic"])
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    # At focus position 0, next is break 1 of 4 (5-minute).
+    assert "Next: Break 1 of 4 (5-minute)" in out
+
+
+def test_next_line_shows_long_break_with_duration(home, clock, capsys):
+    """The 'Next:' line for the final break shows 'Long break (N-minute)'."""
+    cli.main(["cycle", "classic"])
+    # Complete 3 focus+break pairs to reach the 4th focus.
+    for _ in range(3):
+        clock.advance(minutes=25)
+        cli.main(["status"])
+        clock.advance(minutes=5)
+        cli.main(["status"])
+    # Now on the 4th focus (position 6); check status to see Next line.
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "Next: Long break (15-minute)" in out
+
+
+def test_end_of_cycle_display(home, clock, capsys):
+    """Last step shows 'End of [cycle name]' instead of no Next line."""
+    # Use passion (single focus) — simplest case for "End of" display.
+    cli.main(["cycle", "passion"])
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "Next: End of Passion" in out
+
+
+def test_pause_during_cycle_shows_frozen_remaining(home, clock, capsys):
+    """Pausing during a cycle freezes the remaining display."""
+    cli.main(["cycle", "classic"])
+    clock.advance(minutes=10)
+    cli.main(["pause"])
+    clock.advance(minutes=5)
+    capsys.readouterr()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    # Remaining frozen at15 min (25 - 10).
+    assert "15:00 remaining (paused)" in out
+    assert "Break 1 of 4" in out

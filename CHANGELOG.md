@@ -13,6 +13,24 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   expanded default rules.
 - README test instructions now run from the project `.venv`, matching
   what `setup.sh` creates.
+- Cycle status and event displays now show break numbering
+  (`Break 1 of 4`) matching the existing focus numbering format.
+- The `Next:` line in cycle status always shows the duration of the
+  upcoming phase (e.g. `Next: Focus 2 of 6 (25-minute)`).
+- When on the last phase of a cycle, the status shows
+  `Next: End of [cycle name]` instead of omitting the line.
+- History rows for break sessions in cycles now carry cycle tags
+  (e.g. `Classic break 1/4`).
+
+### Fixed
+- Focus numbering in the `Next:` line now shows the correct focus
+  count (e.g. `Focus 2 of 6` for marathon) instead of the total
+  step count (e.g. `Focus 2 of 12`).
+- Paused sessions no longer appear to count down when checking
+  `perido status` — `remaining_seconds()` now freezes the displayed
+  time at the pause instant, matching the frozen progress bar.
+- `resume()` no longer shifts the end time; remaining counts down
+  naturally from the frozen value after resuming.
 
 ## [1.4.2] - 2026-08-28
 

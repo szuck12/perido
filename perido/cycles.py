@@ -116,7 +116,7 @@ def advance(
         cycle_position=nxt,
     )
     database.update_cycle(conn, cycle_id, position=nxt)
-    return {
+    event: dict[str, Any] = {
         "event": "phase_start",
         "kind": step["kind"],
         "minutes": step["minutes"],
@@ -125,6 +125,14 @@ def advance(
         "final_break": step["kind"] == "break" and nxt == len(steps) - 1,
         "cycle_name": cycle["name"],
     }
+    if step["kind"] == "break" and not event["final_break"]:
+        event["break_slot"] = sum(
+            1 for s in steps[:nxt] if s["kind"] == "break"
+        ) + 1
+        event["break_total"] = sum(
+            1 for s in steps if s["kind"] == "break"
+        )
+    return event
 
 
 def summarize(steps: list[dict[str, Any]]) -> dict[str, Any]:
@@ -160,14 +168,16 @@ def next_step(cycle: dict[str, Any], position: int) -> dict[str, Any] | None:
     Returns:
         Dict with "kind", "minutes", "position", "total",
         "final_break", and — for focus steps — "slot" (1-based focus
-        number), or None when the plan is exhausted.
+        number) and "focus_total"; for non-final break steps —
+        "break_slot" (1-based break number) and "break_total"; or None
+        when the plan is exhausted.
     """
     steps = database.json_loads(cycle["plan"])
     nxt = position + 1
     if nxt >= len(steps):
         return None
     step = steps[nxt]
-    info = {
+    info: dict[str, Any] = {
         "kind": step["kind"],
         "minutes": step["minutes"],
         "position": nxt,
@@ -178,4 +188,14 @@ def next_step(cycle: dict[str, Any], position: int) -> dict[str, Any] | None:
         info["slot"] = sum(
             1 for s in steps[:nxt] if s["kind"] == "focus"
         ) + 1
+        info["focus_total"] = sum(
+            1 for s in steps if s["kind"] == "focus"
+        )
+    elif not info["final_break"]:
+        info["break_slot"] = sum(
+            1 for s in steps[:nxt] if s["kind"] == "break"
+        ) + 1
+        info["break_total"] = sum(
+            1 for s in steps if s["kind"] == "break"
+        )
     return info

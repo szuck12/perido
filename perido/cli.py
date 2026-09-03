@@ -116,6 +116,13 @@ def _focus_slot(steps: list[dict], position: int) -> tuple[int, int]:
     return index + 1, total
 
 
+def _break_slot(steps: list[dict], position: int) -> tuple[int, int]:
+    """Map a plan position to its 1-based break index and break total."""
+    total = sum(1 for step in steps if step["kind"] == "break")
+    index = sum(1 for step in steps[:position] if step["kind"] == "break")
+    return index + 1, total
+
+
 # ---------------------------------------------------------------------
 # Event rendering (lazy completions and cycle transitions)
 # ---------------------------------------------------------------------
@@ -141,8 +148,14 @@ def _render_event(event: dict) -> str:
         return block
     if event["event"] == "phase_start":
         if event["kind"] == "break":
-            label = "Long break" if event["final_break"] else "Break"
-            return f"☕ {label} started."
+            if event.get("final_break"):
+                return "☕ Long break started."
+            slot = event.get("break_slot", "?")
+            total = event.get("break_total", "?")
+            return (
+                f"☕ Break {slot} of {total} started.\n"
+                f"{fmt_clock(event['minutes'] * 60)}"
+            )
         slot, total = _focus_slot_total(event)
         return (
             f"🍅 Focus session {slot} of {total} starting now.\n"
@@ -193,6 +206,15 @@ def render_status() -> str:
             if session["kind"] == "focus":
                 slot, total = _focus_slot(steps, session["cycle_position"])
                 lines.append(f"Focus {slot} of {total}")
+            elif session["kind"] == "break":
+                step = steps[session["cycle_position"]]
+                if step.get("final_break"):
+                    lines.append("Long break")
+                else:
+                    slot, total = _break_slot(
+                        steps, session["cycle_position"]
+                    )
+                    lines.append(f"Break {slot} of {total}")
         lines.append("")
         lines.append(bar(timer.progress_fraction(session)))
         remaining = fmt_clock(timer.remaining_seconds(session))
@@ -207,18 +229,30 @@ def render_status() -> str:
             nxt = cycles.next_step(cycle, session["cycle_position"])
             if nxt:
                 lines.append(f"Next: {_step_label(nxt)}")
+            else:
+                name = _clean_label(cycle["name"]).title()
+                lines.append(f"Next: End of {name}")
         return "\n".join(lines)
     finally:
         conn.close()
 
 
 def _step_label(step: dict) -> str:
-    """Human label for an upcoming cycle step."""
+    """Human label for an upcoming cycle step.
+
+    Includes the step number and total for both focus and break steps,
+    and always shows the duration of the next period.
+    """
+    duration = f" ({_trim(step['minutes'])}-minute)"
     if step["kind"] == "break":
         if step["final_break"]:
-            return "Long break"
-        return f"{_trim(step['minutes'])}-minute break"
-    return f"Focus {step['slot']} of {step['total']}"
+            return f"Long break{duration}"
+        slot = step.get("break_slot", "?")
+        total = step.get("break_total", "?")
+        return f"Break {slot} of {total}{duration}"
+    slot = step.get("slot", "?")
+    total = step.get("focus_total", step.get("total", "?"))
+    return f"Focus {slot} of {total}{duration}"
 
 
 def _idle_block(conn: sqlite3.Connection) -> str:
@@ -451,11 +485,19 @@ def _history_row(
     elif ext < 0:
         tags.append(f"-{_trim(-ext)}m trimmed")
     cycle = database.get_cycle(conn, row["cycle_id"])
-    if cycle and row["kind"] == "focus":
+    if cycle:
         steps = database.json_loads(cycle["plan"])
-        slot, total_focus = _focus_slot(steps, row["cycle_position"])
         name = _clean_label(row["cycle_name"]).title()
-        tags.append(f"{name} {slot}/{total_focus}")
+        if row["kind"] == "focus":
+            slot, total_focus = _focus_slot(steps, row["cycle_position"])
+            tags.append(f"{name} {slot}/{total_focus}")
+        elif row["kind"] == "break":
+            step = steps[row["cycle_position"]]
+            if step.get("final_break"):
+                tags.append(f"{name} long break")
+            else:
+                slot, total_breaks = _break_slot(steps, row["cycle_position"])
+                tags.append(f"{name} break {slot}/{total_breaks}")
     if tags:
         result += "  " + "  ".join(tags)
     return (_day_label(started.date()), fmt_tod(started), duration, result)
